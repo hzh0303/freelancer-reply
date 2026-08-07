@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FreelancerReply - Polite Email Generator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#005045",
+                        "tertiary": "#914632",
+                        "surface-bright": "#f1fcf4",
+                        "outline": "#6e7a76",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "surface-tint": "#006b5c",
+                        "primary-fixed": "#92f4df",
+                        "secondary-fixed": "#ffddb8",
+                        "surface-variant": "#dae5dd",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#855300",
+                        "on-secondary-fixed": "#2a1700",
+                        "on-background": "#141e19",
+                        "surface-container-low": "#ebf6ee",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#ffdbd2",
+                        "inverse-on-surface": "#e8f4eb",
+                        "primary-container": "#078372",
+                        "surface-container-highest": "#dae5dd",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "on-tertiary-container": "#fffbff",
+                        "outline-variant": "#bdc9c5",
+                        "on-surface-variant": "#3e4946",
+                        "tertiary-fixed-dim": "#ffb4a1",
+                        "on-surface": "#141e19",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#28332d",
+                        "surface-container": "#e5f1e8",
+                        "surface-dim": "#d1ddd5",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#76321f",
+                        "on-secondary-container": "#734700",
+                        "inverse-primary": "#75d8c3",
+                        "tertiary-container": "#b05e48",
+                        "surface-container-high": "#dfebe3",
+                        "primary": "#00685a",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#00201b",
+                        "secondary-container": "#feb557",
+                        "on-tertiary-fixed": "#3c0800",
+                        "background": "#f1fcf4",
+                        "surface": "#f1fcf4",
+                        "on-primary-container": "#f4fffa",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#75d8c3",
+                        "paper-bg": "#F7F3EC",
+                        "paper-card": "#FFFEFA",
+                        "paper-border": "#DDE5DF"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "container-max": "1200px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "section-gap": "80px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Newsreader"],
+                        "headline-lg": ["Newsreader"],
+                        "body-md": ["Work Sans"],
+                        "body-sm": ["Work Sans"],
+                        "headline-md": ["Newsreader"],
+                        "body-lg": ["Work Sans"],
+                        "headline-lg-mobile": ["Newsreader"],
+                        "button": ["Work Sans"],
+                        "label-caps": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-md": ["32px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "button": ["15px", { "lineHeight": "1.0", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    },
+                    "boxShadow": {
+                        "ambient": "0 2px 10px rgba(23, 33, 28, 0.04)",
+                        "hover": "0 10px 30px rgba(23, 33, 28, 0.08)"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.paper-bg');
+            color: theme('colors.on-background');
+        }
+        .solid-paper-card {
+            background-color: theme('colors.paper-card');
+            border: 1px solid theme('colors.paper-border');
+            box-shadow: theme('boxShadow.ambient');
+            transition: box-shadow 300ms ease-in-out;
+        }
+        .solid-paper-card:hover {
+            box-shadow: theme('boxShadow.hover');
+        }
+        .list-row {
+            border-bottom: 1px solid theme('colors.paper-border');
+        }
+        .list-row:last-child {
+            border-bottom: none;
+        }
+        /* Custom scrollbar for output area */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-variant');
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline');
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 border-b border-outline-variant dark:border-outline shadow-sm z-50 sticky">
+<div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-20">
+<div class="font-headline-sm text-headline-sm font-medium text-on-surface dark:text-on-surface-variant cursor-pointer flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">edit_document</span>
+                FreelancerReply
+            </div>
+<nav class="hidden md:flex gap-8">
+<!-- Navigation Logic: No explicit active state for root homepage, assuming browse/explore intent. Leaving as inactive/default. -->
+<a class="text-on-surface-variant dark:text-outline-variant font-body-md hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-300" href="#">Late Payment Reminder</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-body-md hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-300" href="#">Examples</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-body-md hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-300" href="#">Pricing</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-body-md hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-300" href="#">FAQ</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="font-button text-button text-on-surface hover:text-primary transition-colors hidden sm:block">Pro waitlist</button>
+<button class="bg-primary text-on-primary px-6 py-3 rounded font-button text-button hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">Generate reminder</button>
+</div>
+</div>
+</header>
+<main class="flex-grow">
+<!-- Hero Section -->
+<section class="max-w-container-max mx-auto px-margin-desktop py-section-gap grid grid-cols-1 lg:grid-cols-[1.08fr_1fr] gap-16 items-center">
+<!-- Left Column: Copy -->
+<div class="flex flex-col gap-6 items-start">
+<div class="bg-surface-container-low border border-paper-border px-4 py-1.5 rounded-full inline-flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Free beta • 3 generations/day</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Freelance Email Generator for Awkward Client Conversations</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+                    Staring at a blinking cursor trying to figure out how to ask for money without ruining the relationship? You're not alone. The hardest part of freelancing isn't the work, it's managing the clients.
+                </p>
+<div class="flex flex-col gap-4 w-full mt-4">
+<h3 class="font-body-md text-body-md font-medium text-on-surface">Start with a polite late payment reminder...</h3>
+<div class="flex flex-wrap gap-4 items-center">
+<button class="bg-primary text-on-primary px-8 py-4 rounded font-button text-button shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">Generate a late payment reminder</button>
+<button class="border border-paper-border bg-paper-card text-on-surface px-8 py-4 rounded font-button text-button hover:bg-surface-container-lowest transition-colors">See example email</button>
+</div>
+<p class="font-body-sm text-body-sm text-outline flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+                        Nothing is sent automatically. You stay in control of what gets sent.
+                    </p>
+</div>
+</div>
+<!-- Right Column: Mockup Workspace -->
+<div class="solid-paper-card rounded-lg p-6 flex flex-col gap-6 relative overflow-hidden group">
+<!-- Subtle decorative background element -->
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-surface-container-low rounded-full opacity-50 blur-3xl -z-10 group-hover:bg-primary-container/10 transition-colors duration-1000"></div>
+<div class="flex items-center justify-between border-b border-paper-border pb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary bg-primary-container/20 p-2 rounded">receipt_long</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Invoice Follow-up</h2>
+</div>
+<span class="font-label-caps text-label-caps text-outline bg-surface-container-low px-3 py-1 rounded">Draft Mode</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Client Name</label>
+<input class="bg-paper-bg border border-paper-border rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:bg-paper-card transition-colors" readonly="" type="text" value="Sarah"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Amount</label>
+<input class="bg-paper-bg border border-paper-border rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:bg-paper-card transition-colors" readonly="" type="text" value="$850"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Days Overdue</label>
+<input class="bg-paper-bg border border-paper-border rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:bg-paper-card transition-colors" readonly="" type="text" value="12"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Project</label>
+<input class="bg-paper-bg border border-paper-border rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:bg-paper-card transition-colors" readonly="" type="text" value="Website redesign"/>
+</div>
+</div>
+<div class="flex flex-col gap-3 pt-2">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Tone Strategy</label>
+<div class="flex flex-wrap gap-2">
+<button class="bg-[#F1EDE6] text-on-surface-variant border border-transparent px-4 py-1.5 rounded-full font-body-sm text-body-sm hover:border-outline-variant transition-colors">Friendly</button>
+<button class="bg-primary/10 text-primary border border-primary/20 px-4 py-1.5 rounded-full font-body-sm text-body-sm flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>Professional</button>
+<button class="bg-[#F1EDE6] text-on-surface-variant border border-transparent px-4 py-1.5 rounded-full font-body-sm text-body-sm hover:border-outline-variant transition-colors">Firm</button>
+<button class="bg-error/10 text-error border border-transparent px-4 py-1.5 rounded-full font-body-sm text-body-sm hover:border-error/20 transition-colors">Final Notice</button>
+</div>
+</div>
+<div class="border border-paper-border rounded bg-paper-bg flex flex-col h-48">
+<div class="flex items-center gap-4 px-4 py-2 border-b border-paper-border bg-paper-card rounded-t">
+<button class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface">Gentle</button>
+<button class="font-body-sm text-body-sm text-primary font-medium border-b-2 border-primary pb-0.5">Firm</button>
+<button class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface">Final Notice</button>
+</div>
+<div class="p-4 overflow-y-auto font-body-md text-body-md text-on-surface whitespace-pre-wrap leading-relaxed opacity-90 relative group/copy">
+Hi Sarah,
+
+I hope you're having a good week.
+
+I'm writing to follow up on invoice #1042 for the Website redesign project in the amount of $850. As of today, this payment is 12 days overdue.
+
+Could you please let me know when I can expect this to be processed? I've re-attached the original invoice for your convenience.
+
+Best,
+Your Name
+                        
+                        <!-- Hover Copy Action -->
+<div class="absolute inset-0 bg-paper-bg/80 backdrop-blur-[2px] opacity-0 group-hover/copy:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-paper-card border border-paper-border shadow-sm px-4 py-2 rounded flex items-center gap-2 font-button text-button text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+                                Copy to Clipboard
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container dark:bg-surface-container-highest border-t border-outline-variant dark:border-outline mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-margin-desktop py-12 max-w-container-max mx-auto gap-gutter">
+<div class="font-headline-sm text-headline-sm text-on-surface dark:text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">edit_document</span>
+                FreelancerReply
+            </div>
+<div class="flex flex-wrap gap-6 justify-center">
+<a class="text-on-surface-variant dark:text-outline-variant font-body-sm text-body-sm hover:text-primary dark:hover:text-primary-fixed-dim underline transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary rounded px-1" href="#">Privacy</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-body-sm text-body-sm hover:text-primary dark:hover:text-primary-fixed-dim underline transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary rounded px-1" href="#">Terms</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-body-sm text-body-sm hover:text-primary dark:hover:text-primary-fixed-dim underline transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary rounded px-1" href="#">Cookie Policy</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-body-sm text-body-sm hover:text-primary dark:hover:text-primary-fixed-dim underline transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary rounded px-1" href="#">Refund Policy</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-body-sm text-body-sm hover:text-primary dark:hover:text-primary-fixed-dim underline transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary rounded px-1" href="#">Contact</a>
+</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">
+                © 2024 FreelancerReply. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

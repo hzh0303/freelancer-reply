@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pricing &amp; Waitlist - FreelancerReply</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&amp;family=Work+Sans:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#ffddb8",
+                        "on-tertiary-container": "#fffbff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#75d8c3",
+                        "surface-container-high": "#dfebe3",
+                        "primary-container": "#078372",
+                        "on-tertiary-fixed-variant": "#76321f",
+                        "surface": "#f1fcf4",
+                        "outline-variant": "#bdc9c5",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "secondary-container": "#feb557",
+                        "on-secondary-fixed": "#2a1700",
+                        "on-primary-container": "#f4fffa",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "primary-fixed-dim": "#75d8c3",
+                        "on-surface-variant": "#3e4946",
+                        "tertiary-fixed": "#ffdbd2",
+                        "tertiary-container": "#b05e48",
+                        "on-background": "#141e19",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d1ddd5",
+                        "surface-container-highest": "#dae5dd",
+                        "surface-container": "#e5f1e8",
+                        "on-primary-fixed": "#00201b",
+                        "on-surface": "#141e19",
+                        "surface-container-low": "#ebf6ee",
+                        "surface-tint": "#006b5c",
+                        "outline": "#6e7a76",
+                        "on-primary": "#ffffff",
+                        "background": "#f1fcf4",
+                        "tertiary": "#914632",
+                        "surface-bright": "#f1fcf4",
+                        "on-error": "#ffffff",
+                        "secondary": "#855300",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#92f4df",
+                        "tertiary-fixed-dim": "#ffb4a1",
+                        "primary": "#00685a",
+                        "surface-variant": "#dae5dd",
+                        "on-primary-fixed-variant": "#005045",
+                        "on-tertiary-fixed": "#3c0800",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#734700",
+                        "inverse-surface": "#28332d",
+                        "inverse-on-surface": "#e8f4eb",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "unit": "8px",
+                        "margin-desktop": "40px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Work Sans"],
+                        "body-sm": ["Work Sans"],
+                        "headline-sm": ["Newsreader"],
+                        "button": ["Work Sans"],
+                        "body-lg": ["Work Sans"],
+                        "label-caps": ["Work Sans"],
+                        "headline-md": ["Newsreader"],
+                        "headline-lg": ["Newsreader"],
+                        "headline-lg-mobile": ["Newsreader"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "button": ["15px", { "lineHeight": "1.0", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["32px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F3EC;
+            color: #17211C;
+        }
+        .surface-card {
+            background-color: #FFFEFA;
+            border: 1px solid #DDE5DF;
+            box-shadow: 0 2px 10px rgba(23, 33, 28, 0.04);
+        }
+        .surface-card-hover:hover {
+            box-shadow: 0 10px 30px rgba(23, 33, 28, 0.08);
+        }
+        .chip {
+            background-color: #F1EDE6;
+        }
+        .btn-primary {
+            background-color: #1C8C7A;
+            color: #FFFEFA;
+        }
+        .btn-secondary {
+            border: 1px solid #DDE5DF;
+            background-color: transparent;
+            color: #17211C;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col font-body-md text-body-md">
+<!-- TopNavBar (From Shared Components) -->
+<header class="bg-surface dark:bg-inverse-surface font-body-md text-body-md font-button text-button shadow-sm fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 max-w-container-max mx-auto border-b border-outline-variant dark:border-outline shadow-sm docked full-width top-0">
+<div class="font-headline-sm text-headline-sm font-semibold text-primary dark:text-inverse-primary">
+            FreelancerReply
+        </div>
+<nav class="hidden md:flex space-x-gutter items-center">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-300" href="#">Late Payment Reminder</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-300" href="#">Examples</a>
+<a class="text-primary dark:text-inverse-primary border-b-2 border-primary dark:border-inverse-primary pb-1 hover:text-primary dark:hover:text-inverse-primary transition-colors duration-300" href="#">Pricing</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-300" href="#">FAQ</a>
+</nav>
+<div class="flex items-center space-x-unit">
+<button class="btn-secondary px-4 py-2 rounded font-button text-button hover:opacity-80 transition-all duration-300">Pro waitlist</button>
+<button class="btn-primary px-4 py-2 rounded font-button text-button hover:opacity-80 transition-all duration-300">Generate reminder</button>
+</div>
+</header>
+<main class="flex-grow pt-32 pb-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto w-full">
+<section class="text-center mb-section-gap">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg mb-6 max-w-3xl mx-auto">
+                Free beta for your first overdue invoice follow-ups.
+            </h1>
+<p class="font-body-lg text-body-lg text-[#6E7974] max-w-2xl mx-auto">
+                Simple, transparent plans for independent professionals. Start for free during our public beta.
+            </p>
+</section>
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter items-start">
+<!-- Free Beta Card -->
+<div class="surface-card rounded-[20px] p-8 surface-card-hover transition-all duration-300 relative overflow-hidden flex flex-col h-full border-[#1C8C7A]">
+<div class="absolute top-0 right-0 bg-[#1C8C7A] text-[#FFFEFA] font-label-caps text-label-caps px-3 py-1 rounded-bl-lg">
+                    Active Beta
+                </div>
+<div class="mb-8">
+<h2 class="font-headline-md text-headline-md mb-2">Free Beta</h2>
+<div class="flex items-baseline mb-4">
+<span class="font-headline-lg text-headline-lg">$0</span>
+</div>
+</div>
+<div class="flex-grow mb-8 space-y-6">
+<div>
+<h4 class="font-label-caps text-label-caps text-[#6E7974] mb-3 uppercase tracking-wider">Features</h4>
+<ul class="space-y-3 font-body-sm text-body-sm">
+<li class="flex items-start"><span class="material-symbols-outlined text-[#1C8C7A] mr-2 text-sm">check_circle</span> 3 generations/day (per IP/session)</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#1C8C7A] mr-2 text-sm">check_circle</span> Gentle/Firm/Final Notice tones</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#1C8C7A] mr-2 text-sm">check_circle</span> Subject lines &amp; Full email bodies</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#1C8C7A] mr-2 text-sm">check_circle</span> Short DM/SMS versions</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#1C8C7A] mr-2 text-sm">check_circle</span> Copy &amp; Regenerate tools</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#1C8C7A] mr-2 text-sm">check_circle</span> Tone switcher</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#1C8C7A] mr-2 text-sm">check_circle</span> No account required</li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-caps text-label-caps text-[#6E7974] mb-3 uppercase tracking-wider">Limits</h4>
+<ul class="space-y-3 font-body-sm text-body-sm text-[#6E7974]">
+<li class="flex items-start"><span class="material-symbols-outlined mr-2 text-sm opacity-50">remove</span> Regenerations count toward daily limit</li>
+<li class="flex items-start"><span class="material-symbols-outlined mr-2 text-sm opacity-50">remove</span> No saved clients/history</li>
+<li class="flex items-start"><span class="material-symbols-outlined mr-2 text-sm opacity-50">remove</span> No brand voice or sequence exports</li>
+<li class="flex items-start"><span class="material-symbols-outlined mr-2 text-sm opacity-50">remove</span> No automatic sending or invoice processing</li>
+</ul>
+</div>
+</div>
+<button class="btn-primary w-full py-3 rounded-lg font-button text-button hover:opacity-90 transition-opacity">
+                    Generate a free reminder
+                </button>
+</div>
+<!-- Pro Solo Card -->
+<div class="surface-card rounded-[20px] p-8 surface-card-hover transition-all duration-300 relative flex flex-col h-full opacity-90">
+<div class="absolute top-0 right-0 bg-[#B7791F] text-[#FFFEFA] font-label-caps text-label-caps px-3 py-1 rounded-bl-lg">
+                    Waitlist / Planned
+                </div>
+<div class="mb-8">
+<h2 class="font-headline-md text-headline-md mb-2">Pro Solo</h2>
+<div class="flex items-baseline mb-1">
+<span class="font-headline-lg text-headline-lg">$9</span>
+<span class="font-body-sm text-body-sm text-[#6E7974] ml-1">/month</span>
+</div>
+<div class="font-body-sm text-body-sm text-[#6E7974]">or $90/year</div>
+</div>
+<div class="flex-grow mb-8">
+<h4 class="font-label-caps text-label-caps text-[#6E7974] mb-3 uppercase tracking-wider">Features</h4>
+<ul class="space-y-3 font-body-sm text-body-sm">
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 300 generations/month (30/day soft limit)</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 25 saved client snippets</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 3 brand voices</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 100 sequence exports/month</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> Access to additional freelancer email tools</li>
+</ul>
+</div>
+<button class="btn-secondary w-full py-3 rounded-lg font-button text-button hover:bg-surface-container transition-colors">
+                    Join Solo Waitlist
+                </button>
+</div>
+<!-- Pro Plus Card -->
+<div class="surface-card rounded-[20px] p-8 surface-card-hover transition-all duration-300 relative flex flex-col h-full opacity-90">
+<div class="absolute top-0 right-0 chip text-[#6E7974] font-label-caps text-label-caps px-3 py-1 rounded-bl-lg border-l border-b border-[#DDE5DF]">
+                    Planned for P2
+                </div>
+<div class="mb-8">
+<h2 class="font-headline-md text-headline-md mb-2">Pro Plus</h2>
+<div class="flex items-baseline mb-1">
+<span class="font-headline-lg text-headline-lg">$19</span>
+<span class="font-body-sm text-body-sm text-[#6E7974] ml-1">/month</span>
+</div>
+<div class="font-body-sm text-body-sm text-[#6E7974]">or $190/year</div>
+</div>
+<div class="flex-grow mb-8">
+<h4 class="font-label-caps text-label-caps text-[#6E7974] mb-3 uppercase tracking-wider">Features</h4>
+<ul class="space-y-3 font-body-sm text-body-sm">
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 1,500 generations/month (100/day soft limit)</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 200 saved snippets</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 10 brand voices</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 500 exports/month</li>
+<li class="flex items-start"><span class="material-symbols-outlined text-[#6E7974] mr-2 text-sm">add</span> 1-3 seat support</li>
+</ul>
+</div>
+<button class="btn-secondary w-full py-3 rounded-lg font-button text-button hover:bg-surface-container transition-colors">
+                    Join Plus Waitlist
+                </button>
+</div>
+</section>
+<section class="mt-section-gap text-center max-w-3xl mx-auto">
+<p class="font-body-sm text-body-sm text-[#6E7974]">
+<span class="font-semibold">P0 Beta:</span> No payments required today. Prices and features are subject to change before the official launch. Full refund and payment provider details will be published before any charges occur.
+            </p>
+</section>
+</main>
+<!-- Footer (From Shared Components) -->
+<footer class="bg-surface-container-low dark:bg-inverse-surface font-body-sm text-body-sm w-full py-section-gap px-margin-desktop flex flex-col items-center space-y-gutter border-t border-outline-variant dark:border-outline flat no shadows full-width bottom">
+<div class="font-headline-sm text-headline-sm text-on-surface mb-4">
+            FreelancerReply
+        </div>
+<div class="flex flex-wrap justify-center gap-4 mb-4">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary underline transition-all duration-300" href="#">Privacy</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary underline transition-all duration-300" href="#">Terms</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary underline transition-all duration-300" href="#">Cookie Policy</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary underline transition-all duration-300" href="#">Refund Policy</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary underline transition-all duration-300" href="#">Contact</a>
+</div>
+<p class="text-on-surface-variant dark:text-on-surface-variant text-center max-w-2xl">
+            © 2024 FreelancerReply. All rights reserved. Safety Disclaimer: This is a beta tool; please review all AI-generated drafts before sending.
+        </p>
+</footer>
+</body></html>

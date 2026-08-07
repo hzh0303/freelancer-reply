@@ -1,0 +1,200 @@
+{
+  "projectId": "6284166158920708265",
+  "generatedAt": "2026-08-07T10:46:35.926Z",
+  "screens": [
+    {
+      "slug": "home-desktop",
+      "name": "Homepage Desktop",
+      "deviceType": "DESKTOP",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/709fbc6ee2ea43ebb442323564cc95de",
+          "screenId": "709fbc6ee2ea43ebb442323564cc95de",
+          "width": "2560",
+          "height": "2048",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sXzgyOGVlNWJkYjVmMTRiMTZhMTM5MDYzYTkxZjEzZjVlEgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLv56inbVkWbjhcFpAHVkExRGC-wIm6xpJXKRn8greapDAZSCSEhE6OI8H6wZDEsxdJUO3TY7d55-SyAYMoJkNwjagWkdu_C9KDFaGTOfsAkflVocSI8j1cVo9hx_3-6KFlgubdRRupijbdLZEfc7IDRBYRBGjg9hd9CKreDIZhkWLWMXeWFjHxg-BbyY4ih_j0mA7ENRFr32Fpl3rcWQfIqm472fdqEjvC3EcBgJxc8Qx-szPAu1q0FpQ",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/home-desktop.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/home-desktop.png",
+          "downloadError": " html: fetch failed screenshot: fetch failed"
+        }
+      ]
+    },
+    {
+      "slug": "home-mobile",
+      "name": "Homepage Mobile",
+      "deviceType": "MOBILE",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/0e9f21b8444246dcaa6adca88c522eb9",
+          "screenId": "0e9f21b8444246dcaa6adca88c522eb9",
+          "width": "780",
+          "height": "7176",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2U5ZGJlYmYxNzBiYTRjMWQ4ZjU3MzYyZDg2ZWRjMjA3EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsFShkecif0efi1pFldqnTonOQWTo6ipEVPY3aOHzaZr-t4H_VJTdO3Tqwm5_ibwpoyPGr0prx2IoLyzMID9jl4f6GK7JEboqWLMbifBxwQc0_vPb1p3DaadSqisW1avx4c8ePsP6MMn31kS4OynJ6FoqMt3lp9796htRfGiVr1-dAwtWCROuTSWAvC9K-Xv5TpIEHiXTL3MFXUOcUBGDesvhwEin_pgLrpwyXF10Ogok1EPVHKgbr0",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/home-mobile.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/home-mobile.png",
+          "downloadError": " html: fetch failed screenshot: fetch failed"
+        }
+      ]
+    },
+    {
+      "slug": "tool-desktop",
+      "name": "Late Payment Tool Desktop",
+      "deviceType": "DESKTOP",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/086598932b0e4a3d8382ea992f25f6dc",
+          "screenId": "086598932b0e4a3d8382ea992f25f6dc",
+          "width": "2560",
+          "height": "5096",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sXzIxMzBmZjhmMjBlZjQ1NzNhMjZmZjUxODFjZGQ5OTU3EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsuYZbYzofTCDtepqNiYNmI7Bhi1oRbE4BV52QI4FsgFNJK3tmgZGMr2VOHMUPQCBFGGTMMoFovy8Bj_q6UoSOEPRwH-noYBVky7YlKIltzu_kgO-CIP7_fo_tbsMb7zKPtD-x7qgM0QZeN8C8Kr4sAvQHWffhFc8-KWj5dpapUeObXQnaBHP5q_OdOQe_6Q4Ko_SceF4AJ4vUJXK0DJTwNQPC8BKxBRoevNALwQ3XyIr4xjH_96pKG-A",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/tool-desktop.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/tool-desktop.png",
+          "downloadError": " html: fetch failed screenshot: fetch failed"
+        }
+      ]
+    },
+    {
+      "slug": "tool-mobile",
+      "name": "Late Payment Tool Mobile",
+      "deviceType": "MOBILE",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/895c9faa29394390be7b1f1ef76bc0bd",
+          "screenId": "895c9faa29394390be7b1f1ef76bc0bd",
+          "width": "780",
+          "height": "6926",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2RmYjM2OGViNmI2NzRiZjNiNDAxMzUyOWJhMDNmYzM3EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLumlb0_xtdCblzCgGWJNe15-VQrKK_EN79aM-pvsuz5bD2ZsBHcOIv7ib6YerbZFyMPNFiMKgBpA2PUUEaXeOfofp0JWIUlaXWqW5-jHufYKihaMbp0ynPqhO5zwLZPPh4wUVaKoM78IJPmOjbIPJ8TBWy_syvyK0TQmhHnaeN7JJDVTtX6po-qKMxXBWrU332A0_ctdrv9bPxPRi1AeSDn4MdWUss04mTfNXpCVDm63-hogHOGgtUDcg",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/tool-mobile.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/tool-mobile.png",
+          "downloadError": " html: fetch failed screenshot: fetch failed"
+        }
+      ]
+    },
+    {
+      "slug": "pricing-waitlist-desktop",
+      "name": "Pricing and Waitlist Desktop",
+      "deviceType": "DESKTOP",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/4eaeb215aa3d4a83b20eca08b0da2036",
+          "screenId": "4eaeb215aa3d4a83b20eca08b0da2036",
+          "width": "2560",
+          "height": "3266",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2EzMDI2YWVhNTE1NTQyNzk5YjVkNWFmMWQ2N2ExYjdmEgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsR920Dk3zHNiosOeldCLj_MoaG-HnM66u3u6dq8vAxYhTWl6Bwe89dwN4OhtT3M-48eFDxh1A_hSItBWNONQylwIZiNcSLm-Aidxe3-cRaWKTMbCi5GjHUVIldAaoZdes1H88pWl7MSv0pbzt6xCNvnWsl9Y_TTKetNkxKldpkIq1zUKEPR3DeBVB1RzZpZ9mixodQSdxZ_Pw0qWdChhfKcm6Oi3UCiVbkI5ai352wP9_BiWj3zprlMA",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/pricing-waitlist-desktop.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/pricing-waitlist-desktop.png"
+        }
+      ]
+    },
+    {
+      "slug": "legal-template-desktop",
+      "name": "Legal Pages Template Desktop",
+      "deviceType": "DESKTOP",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/8efded70fe524f2b8d569e727768d0da",
+          "screenId": "8efded70fe524f2b8d569e727768d0da",
+          "width": "2560",
+          "height": "5942",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2MzMjhmOGZkZTk4YTQ0YWJhM2M0MmE3MGFkNTBlZTM4EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLv9R8aF4p72KVBMaT7sisyDST3faDpUUpGao8QUw0eJHQW_toBoPqjSL8fcwQngStFkOUZtFx0dYZVNXr-KOBXywIkvnMb9Ug0IlWlGXWC-elELsMpwACVzyQUOOkUVumv6wn58J-g6cGQKqAXYTCURY2XPoW2PBHiwA9uGHOWt5Fwu9AW87nQIWhwHpGK8AFFn72JXgGn55mqx8dAmSMnV2yPLEJi1oJ3yGULYPFOXkY77gqjyvYVfHg",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/legal-template-desktop.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/legal-template-desktop.png"
+        }
+      ]
+    },
+    {
+      "slug": "coming-soon-template",
+      "name": "Coming Soon Tool Page Template",
+      "deviceType": "DESKTOP",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/defd8829996b466b90c117c2b8e5c91f",
+          "screenId": "defd8829996b466b90c117c2b8e5c91f",
+          "width": "2560",
+          "height": "3366",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2E0MmU4NGNlYzU0ODQ4OTVhMDUxZmIwN2IzYjY0OTk5EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsD8DRYHGVdk0XYb5b9Gv4uOjuKervrAj_QSLH6FucSYyOQ4lSp0BZNkAM7_DF7BLyPKj25uwSKxwEwpg0XMYJ0cZYqiB8QMl9pvTdp_Eg9zGdPdpHiRQ0jxe_VcIMiW0kyYDMXsbMo6OHBChF4_DkTQeFcnrghzrQPmcjFxJ4_0QyGHaDvUHu2I0fA3uBg1dMvTE2-gIA0yVoVSK7KrdWmZZ6hrUx20CCIzhnsAzWBwiaX0-R9TwgOGw",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/coming-soon-template.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/coming-soon-template.png"
+        }
+      ]
+    },
+    {
+      "slug": "error-system-pages",
+      "name": "404 500 Maintenance Pages",
+      "deviceType": "DESKTOP",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/ac009e830ba6442ca6dd4a977e8214d0",
+          "screenId": "ac009e830ba6442ca6dd4a977e8214d0",
+          "width": "2560",
+          "height": "2048",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2NhNzJjNTExZWFkODRkOWZiN2E4M2ZjYjE2Mjg4NmExEgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLv5Uq_8BwkyAaVwjUOx4kPCDaLFVuG_6QATCyL20tE6WtTZSv4CjaXRVpWAd1I8wlGhWkn_DUrOlX8w2D1xYBSR-vCYJUOKaKQTLZFjJJYDyPq-bYc4Gosdpr6IXBHThed6vpLOECROzzHfNOFjVghiGCJCDm2kdsRfjivo_L7AdAH7vQ5ogtMBdoQHZp9ikSoOsGCAaf86hFUIz4G37u0mCf3rXOugkN5cAUO6C7fm2gMvkX8gqOpXRQ",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/error-system-pages.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/error-system-pages.png"
+        }
+      ]
+    },
+    {
+      "slug": "generator-states",
+      "name": "Generator States and Modals",
+      "deviceType": "DESKTOP",
+      "ok": true,
+      "records": [
+        {
+          "screenName": "projects/6284166158920708265/screens/f3e7a7c5b22a4ffd9f96549111ee2bfe",
+          "screenId": "f3e7a7c5b22a4ffd9f96549111ee2bfe",
+          "width": "2560",
+          "height": "3456",
+          "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sXzU0YjFmMTZjNmM1YjQ5Y2JiZjUwMDg0ZmQ5ZTdkZjU1EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+          "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvUxNoJdQqQvuvj96aeQ1tAE_Kl5AvtjiE48YtR60fRumPUtJVqo_ojCwvR8nZDlYVZsBT-f_-1VlkVsyF2wlrSjaN-6vTxZeAqGHAPYYUZhOB7blC8QNhrnEyzj5LZ6rDvPzrZWL67Sy0pbnktKwkC6OLVnHGadAIp4ErRCqF-v2to_GwHew6JPzPLPKCLY3wNNBPqg5qgBTq2PfnylvlQsEhhkY3yQQGKITbmlWDgKTWxOp7aT7WCcQ",
+          "localHtml": "/Users/hzh/projects/freelancer-reply/stitch-output/generator-states.html",
+          "localScreenshot": "/Users/hzh/projects/freelancer-reply/stitch-output/generator-states.png"
+        }
+      ]
+    },
+    {
+      "slug": "home-mobile-edited",
+      "name": "home-mobile compliance edit",
+      "deviceType": "MOBILE",
+      "ok": false,
+      "records": [],
+      "supersedes": "home-mobile"
+    },
+    {
+      "slug": "tool-mobile-edited",
+      "name": "tool-mobile compliance edit",
+      "deviceType": "MOBILE",
+      "ok": false,
+      "records": [],
+      "supersedes": "tool-mobile"
+    }
+  ],
+  "edits": [
+    {
+      "slug": "home-mobile-edited",
+      "supersedes": "home-mobile",
+      "reason": "Removed unsupported unlimited/upgrade wording"
+    },
+    {
+      "slug": "tool-mobile-edited",
+      "supersedes": "tool-mobile",
+      "reason": "Removed unsupported unlimited/upgrade wording"
+    }
+  ]
+}

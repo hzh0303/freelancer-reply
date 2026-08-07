@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FreelancerReply - Calm Email Generator</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500;600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config from Guidelines -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#3e4946",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "background": "#f1fcf4",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#28332d",
+                        "surface": "#f1fcf4",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "secondary-fixed": "#ffddb8",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#6e7a76",
+                        "surface-container-low": "#ebf6ee",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#3c0800",
+                        "surface-dim": "#d1ddd5",
+                        "primary-container": "#078372",
+                        "surface-container-highest": "#dae5dd",
+                        "tertiary-container": "#b05e48",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#2a1700",
+                        "tertiary": "#914632",
+                        "on-surface": "#141e19",
+                        "on-primary-fixed-variant": "#005045",
+                        "on-primary-container": "#f4fffa",
+                        "inverse-on-surface": "#e8f4eb",
+                        "secondary-container": "#feb557",
+                        "on-tertiary-fixed-variant": "#76321f",
+                        "on-secondary-container": "#734700",
+                        "surface-container": "#e5f1e8",
+                        "surface-tint": "#006b5c",
+                        "on-primary-fixed": "#00201b",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#dae5dd",
+                        "primary-fixed": "#92f4df",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "inverse-primary": "#75d8c3",
+                        "primary-fixed-dim": "#75d8c3",
+                        "primary": "#00685a",
+                        "outline-variant": "#bdc9c5",
+                        "surface-bright": "#f1fcf4",
+                        "tertiary-fixed-dim": "#ffb4a1",
+                        "secondary": "#855300",
+                        "on-background": "#141e19",
+                        "tertiary-fixed": "#ffdbd2",
+                        "surface-container-high": "#dfebe3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "80px",
+                        "margin-desktop": "40px",
+                        "unit": "8px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1200px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Newsreader"],
+                        "label-caps": ["Work Sans"],
+                        "headline-lg": ["Newsreader"],
+                        "body-lg": ["Work Sans"],
+                        "button": ["Work Sans"],
+                        "headline-md": ["Newsreader"],
+                        "headline-sm": ["Newsreader"],
+                        "body-md": ["Work Sans"],
+                        "body-sm": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "button": ["15px", { "lineHeight": "1.0", "fontWeight": "500" }],
+                        "headline-md": ["32px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom scrollbar to match theme */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1fcf4; }
+        ::-webkit-scrollbar-thumb { background: #bdc9c5; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6e7a76; }
+        
+        /* Smooth transitions for calm UI */
+        .calm-transition { transition: all 0.3s ease-in-out; }
+        
+        /* Hide radio buttons for custom tone selector */
+        .tone-radio:checked + label {
+            background-color: #ebf6ee; /* surface-container-low */
+            border-color: #00685a; /* primary */
+            color: #00201b; /* on-primary-fixed */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container flex justify-center">
+<!-- Mobile Constraint Container (Simulating 390px context within wider screens if needed) -->
+<div class="w-full max-w-[420px] bg-surface flex flex-col min-h-screen relative shadow-[0_0_40px_rgba(23,33,28,0.05)]">
+<!-- TopAppBar (Shared Component) -->
+<header class="bg-surface border-b border-outline-variant shadow-sm w-full top-0 sticky z-50">
+<div class="flex items-center justify-between px-margin-mobile h-16 w-full">
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-300 p-2 -ml-2 rounded-full active:opacity-80 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="font-headline-sm text-headline-sm font-semibold text-on-surface">FreelancerReply</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-300 p-2 -mr-2 rounded-full active:opacity-80 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow flex flex-col gap-12 pb-16">
+<!-- Hero Section -->
+<section class="px-margin-mobile pt-10 flex flex-col gap-6 text-center items-center">
+<div class="flex flex-col gap-4">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface text-balance">
+                        Freelance Email Generator for Awkward Client Conversations
+                    </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant px-2">
+                        Stop agonizing over what to say. Generate professional, firm, and polite emails in seconds based on your specific situation.
+                    </p>
+</div>
+<div class="w-full flex flex-col gap-3 mt-2">
+<a class="w-full bg-primary text-on-primary font-button text-button py-4 rounded-lg flex items-center justify-center gap-2 calm-transition hover:bg-surface-tint active:opacity-80 shadow-[0_4px_12px_rgba(0,104,90,0.2)]" href="#generator">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+                        Generate a late payment reminder
+                    </a>
+<button class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface font-button text-button py-4 rounded-lg flex items-center justify-center gap-2 calm-transition hover:bg-surface-container-low active:opacity-80">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+                        See example email
+                    </button>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant opacity-80 mt-2">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span class="font-label-caps text-label-caps">Nothing is sent automatically</span>
+</div>
+</section>
+<!-- Mini Tool Entry Card -->
+<section class="px-margin-mobile" id="generator">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-[0_2px_10px_rgba(23,33,28,0.04)] flex flex-col gap-6">
+<div class="flex justify-between items-center border-b border-outline-variant pb-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">New Email</h2>
+<span class="bg-surface-container-high text-on-surface-variant font-label-caps text-label-caps px-3 py-1.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">token</span>
+                            3 free today
+                        </span>
+</div>
+<form class="flex flex-col gap-5">
+<!-- Inputs Stack -->
+<div class="flex flex-col gap-4">
+<label class="flex flex-col gap-1.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant ml-1">Client Name</span>
+<input class="bg-surface border border-outline-variant rounded-lg px-4 py-3 font-body-md text-on-surface placeholder:text-outline focus:bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary outline-none calm-transition" placeholder="e.g. Acme Corp" type="text"/>
+</label>
+<div class="grid grid-cols-2 gap-4">
+<label class="flex flex-col gap-1.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant ml-1">Amount ($)</span>
+<input class="bg-surface border border-outline-variant rounded-lg px-4 py-3 font-body-md text-on-surface placeholder:text-outline focus:bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary outline-none calm-transition" placeholder="2,500" type="number"/>
+</label>
+<label class="flex flex-col gap-1.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant ml-1">Days Overdue</span>
+<input class="bg-surface border border-outline-variant rounded-lg px-4 py-3 font-body-md text-on-surface placeholder:text-outline focus:bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary outline-none calm-transition" placeholder="14" type="number"/>
+</label>
+</div>
+<label class="flex flex-col gap-1.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant ml-1">Project/Invoice #</span>
+<input class="bg-surface border border-outline-variant rounded-lg px-4 py-3 font-body-md text-on-surface placeholder:text-outline focus:bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary outline-none calm-transition" placeholder="Website Redesign / INV-004" type="text"/>
+</label>
+</div>
+<!-- Tone Selector (2x2) -->
+<div class="flex flex-col gap-2 mt-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant ml-1">Desired Tone</span>
+<div class="grid grid-cols-2 gap-2">
+<div class="relative">
+<input checked="" class="tone-radio sr-only" id="tone-firm" name="tone" type="radio"/>
+<label class="flex flex-col items-center justify-center p-3 border border-outline-variant rounded-lg cursor-pointer bg-surface text-on-surface-variant calm-transition text-center gap-1" for="tone-firm">
+<span class="material-symbols-outlined text-[20px]">gavel</span>
+<span class="font-button text-button text-sm">Firm</span>
+</label>
+</div>
+<div class="relative">
+<input class="tone-radio sr-only" id="tone-polite" name="tone" type="radio"/>
+<label class="flex flex-col items-center justify-center p-3 border border-outline-variant rounded-lg cursor-pointer bg-surface text-on-surface-variant calm-transition text-center gap-1" for="tone-polite">
+<span class="material-symbols-outlined text-[20px]">handshake</span>
+<span class="font-button text-button text-sm">Polite</span>
+</label>
+</div>
+<div class="relative">
+<input class="tone-radio sr-only" id="tone-urgent" name="tone" type="radio"/>
+<label class="flex flex-col items-center justify-center p-3 border border-outline-variant rounded-lg cursor-pointer bg-surface text-on-surface-variant calm-transition text-center gap-1" for="tone-urgent">
+<span class="material-symbols-outlined text-[20px]">timer</span>
+<span class="font-button text-button text-sm">Urgent</span>
+</label>
+</div>
+<div class="relative">
+<input class="tone-radio sr-only" id="tone-friendly" name="tone" type="radio"/>
+<label class="flex flex-col items-center justify-center p-3 border border-outline-variant rounded-lg cursor-pointer bg-surface text-on-surface-variant calm-transition text-center gap-1" for="tone-friendly">
+<span class="material-symbols-outlined text-[20px]">mood</span>
+<span class="font-button text-button text-sm">Friendly</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Action -->
+<div class="pt-2">
+<button class="w-full bg-primary text-on-primary font-button text-button py-4 rounded-lg flex items-center justify-center gap-2 calm-transition hover:bg-surface-tint active:opacity-80 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+                                Generate reminder
+                            </button>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center mt-3 opacity-70">
+                                You can review and edit before copying.
+                            </p>
+</div>
+</form>
+</div>
+</section>
+<!-- Separator -->
+<div class="px-margin-mobile">
+<hr class="border-outline-variant opacity-50"/>
+</div>
+<!-- Example Output Card -->
+<section class="px-margin-mobile flex flex-col gap-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">The Output</h3>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_2px_10px_rgba(23,33,28,0.04)] overflow-hidden">
+<!-- Browser/Email Header Mock -->
+<div class="bg-surface-container py-3 px-4 flex items-center gap-2 border-b border-outline-variant">
+<div class="w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
+<span class="ml-2 font-label-caps text-label-caps text-on-surface-variant">New Message</span>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<div class="flex flex-col gap-1 border-b border-outline-variant pb-3">
+<div class="flex gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant w-12">To:</span>
+<span class="font-body-sm text-body-sm text-on-surface">accounting@acmecorp.com</span>
+</div>
+<div class="flex gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant w-12">Subj:</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Following up: Overdue Invoice INV-004</span>
+</div>
+</div>
+<div class="font-body-md text-body-md text-on-surface flex flex-col gap-3">
+<p>Hi Team,</p>
+<p>I hope this email finds you well.</p>
+<p>I am writing to follow up on Invoice INV-004 for the Website Redesign project, which was due 14 days ago. The outstanding balance is $2,500.</p>
+<p>Could you please provide a status update on this payment? Let me know if you need another copy of the invoice or if there's any further information required from my end to process this.</p>
+<p>Best regards,<br/>Your Name</p>
+</div>
+<button class="mt-2 self-start flex items-center gap-2 text-primary font-button text-button hover:bg-surface-container-low px-3 py-2 -ml-3 rounded-lg calm-transition">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+                            Copy to clipboard
+                        </button>
+</div>
+</div>
+</section>
+<!-- Benefits Bento (Stacked) -->
+<section class="px-margin-mobile flex flex-col gap-6">
+<h3 class="font-headline-md text-headline-md text-on-surface">Why use this?</h3>
+<div class="flex flex-col gap-3">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 flex items-start gap-4 shadow-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div class="flex flex-col gap-1">
+<h4 class="font-headline-sm text-headline-sm text-[20px] text-on-surface">Stop Staring at a Blank Page</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Get a solid first draft in seconds instead of agonizing for twenty minutes over formatting.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 flex items-start gap-4 shadow-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">balance</span>
+</div>
+<div class="flex flex-col gap-1">
+<h4 class="font-headline-sm text-headline-sm text-[20px] text-on-surface">Maintain the Relationship</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Our tone guardrails ensure you sound professional and firm without crossing into aggression.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Pricing -->
+<section class="px-margin-mobile flex flex-col gap-6 bg-surface-container-high py-10 rounded-2xl mx-2">
+<div class="text-center flex flex-col gap-2 px-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Simple Pricing</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Start for free, upgrade when you scale.</p>
+</div>
+<div class="flex flex-col gap-4 px-4">
+<!-- Free Tier -->
+<div class="bg-surface-container-lowest border-2 border-primary rounded-xl p-6 shadow-sm relative">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-on-primary font-label-caps text-label-caps px-3 py-1 rounded-full">Current Beta</div>
+<div class="flex flex-col items-center border-b border-outline-variant pb-4 mb-4 mt-2">
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Free</h4>
+<div class="mt-2 text-on-surface"><span class="text-3xl font-bold font-headline-lg-mobile">$0</span>/mo</div>
+</div>
+<ul class="flex flex-col gap-3 font-body-sm text-body-sm text-on-surface-variant mb-6">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> 3 generations per day</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Standard templates</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Basic tone selector</li>
+</ul>
+<button class="w-full bg-primary text-on-primary font-button text-button py-3 rounded-lg calm-transition hover:bg-surface-tint">
+                            Get Started
+                        </button>
+</div>
+<!-- Pro Tier -->
+<div class="bg-surface border border-outline-variant rounded-xl p-6 shadow-sm opacity-80 grayscale-[20%]">
+<div class="flex flex-col items-center border-b border-outline-variant pb-4 mb-4">
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Pro</h4>
+<div class="mt-2 text-on-surface"><span class="text-3xl font-bold font-headline-lg-mobile">$5</span>/mo</div>
+</div>
+<ul class="flex flex-col gap-3 font-body-sm text-body-sm text-on-surface-variant mb-6">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-outline text-[18px]">lock</span> Unlimited generations</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-outline text-[18px]">lock</span> Custom context injection</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-outline text-[18px]">lock</span> Gmail/Outlook integration</li>
+</ul>
+<button class="w-full bg-surface-container-high text-on-surface-variant font-button text-button py-3 rounded-lg cursor-not-allowed">
+                            Coming Soon
+                        </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-surface-container-low border-t border-outline-variant w-full bottom-0 mt-auto">
+<div class="flex flex-col justify-between items-center py-8 px-margin-mobile gap-6 w-full">
+<div class="font-label-caps text-label-caps tracking-widest text-on-surface">
+                    FreelancerReply
+                </div>
+<div class="flex flex-wrap justify-center gap-x-6 gap-y-3">
+<a class="text-on-surface-variant font-body-sm text-body-sm hover:text-primary transition-colors duration-300" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant font-body-sm text-body-sm hover:text-primary transition-colors duration-300" href="#">Terms of Service</a>
+<a class="text-on-surface-variant font-body-sm text-body-sm hover:text-primary transition-colors duration-300" href="#">Support</a>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant opacity-70 mt-2 text-center">
+                    © 2024 FreelancerReply. All rights reserved.
+                </div>
+</div>
+</footer>
+</div>
+</body></html>

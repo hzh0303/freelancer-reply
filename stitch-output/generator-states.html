@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FreelancerReply - Desktop States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error-container": "#ffdad6",
+                      "error": "#ba1a1a",
+                      "surface-tint": "#006b5c",
+                      "surface-container-high": "#dfebe3",
+                      "primary": "#00685a",
+                      "inverse-primary": "#75d8c3",
+                      "outline-variant": "#bdc9c5",
+                      "on-tertiary-container": "#fffbff",
+                      "on-primary-container": "#f4fffa",
+                      "surface-container": "#e5f1e8",
+                      "tertiary-fixed-dim": "#ffb4a1",
+                      "surface-dim": "#d1ddd5",
+                      "on-tertiary-fixed": "#3c0800",
+                      "secondary-fixed": "#ffddb8",
+                      "secondary-fixed-dim": "#ffb95f",
+                      "on-secondary-container": "#734700",
+                      "outline": "#6e7a76",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "tertiary": "#914632",
+                      "primary-fixed": "#92f4df",
+                      "on-secondary-fixed": "#2a1700",
+                      "on-tertiary-fixed-variant": "#76321f",
+                      "surface-variant": "#dae5dd",
+                      "tertiary-container": "#b05e48",
+                      "inverse-surface": "#28332d",
+                      "secondary-container": "#feb557",
+                      "on-surface-variant": "#3e4946",
+                      "on-primary-fixed": "#00201b",
+                      "on-background": "#141e19",
+                      "secondary": "#855300",
+                      "on-error": "#ffffff",
+                      "primary-container": "#078372",
+                      "surface": "#f1fcf4",
+                      "tertiary-fixed": "#ffdbd2",
+                      "on-secondary-fixed-variant": "#653e00",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed-dim": "#75d8c3",
+                      "on-surface": "#141e19",
+                      "surface-container-highest": "#dae5dd",
+                      "inverse-on-surface": "#e8f4eb",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed-variant": "#005045",
+                      "surface-bright": "#f1fcf4",
+                      "background": "#f1fcf4",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#ebf6ee"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "8px",
+                      "section-gap": "80px",
+                      "gutter": "24px",
+                      "margin-desktop": "40px",
+                      "margin-mobile": "16px",
+                      "container-max": "1200px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Work Sans"
+                      ],
+                      "headline-lg-mobile": [
+                              "Newsreader"
+                      ],
+                      "headline-sm": [
+                              "Newsreader"
+                      ],
+                      "body-sm": [
+                              "Work Sans"
+                      ],
+                      "label-caps": [
+                              "Work Sans"
+                      ],
+                      "headline-lg": [
+                              "Newsreader"
+                      ],
+                      "button": [
+                              "Work Sans"
+                      ],
+                      "headline-md": [
+                              "Newsreader"
+                      ],
+                      "body-lg": [
+                              "Work Sans"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "button": [
+                              "15px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #F7F3EC; /* Base desk surface */
+            color: #141e19;
+        }
+        .paper-card {
+            background-color: #FFFEFA;
+            border: 1px solid #DDE5DF;
+            box-shadow: 0 2px 10px rgba(23, 33, 28, 0.04);
+        }
+        .paper-modal {
+            background-color: #FFFEFA;
+            border: 1px solid #DDE5DF;
+            box-shadow: 0 10px 30px rgba(23, 33, 28, 0.08);
+        }
+        .input-base {
+            background-color: #F7F3EC;
+            border: 1px solid transparent;
+            transition: all 0.3s ease-in-out;
+        }
+        .input-base:focus {
+            background-color: #FFFEFA;
+            border-color: #00685a; /* Teal border */
+            outline: none;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md min-h-screen">
+<!-- TopNavBar -->
+<nav class="bg-surface docked full-width top-0 border-b border-outline-variant shadow-sm flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-20 z-50 sticky">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-medium text-on-surface">FreelancerReply</span>
+<div class="hidden md:flex gap-6">
+<a class="text-primary border-b-2 border-primary pb-1" href="#">Late Payment Reminder</a>
+<a class="text-on-surface-variant font-body-md hover:text-primary transition-colors duration-300" href="#">Examples</a>
+<a class="text-on-surface-variant font-body-md hover:text-primary transition-colors duration-300" href="#">Pricing</a>
+<a class="text-on-surface-variant font-body-md hover:text-primary transition-colors duration-300" href="#">FAQ</a>
+</div>
+</div>
+<div class="flex items-center gap-4 hidden md:flex">
+<button class="font-button text-button text-on-surface-variant hover:text-primary transition-colors duration-300 border border-outline-variant px-4 py-2 rounded">Pro waitlist</button>
+<button class="font-button text-button bg-primary text-on-primary px-4 py-2 rounded hover:bg-primary-container transition-colors duration-300">Generate reminder</button>
+</div>
+</nav>
+<main class="max-w-container-max mx-auto px-margin-desktop py-section-gap space-y-section-gap">
+<header>
+<h1 class="font-headline-lg text-headline-lg text-on-background mb-4">Desktop UI States</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">A comprehensive overview of interface states for the FreelancerReply generator, adhering to the Calm Inbox Desk aesthetic.</p>
+</header>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- 1. Empty State -->
+<section class="col-span-12 md:col-span-6 space-y-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">1. Empty State</h2>
+<div class="paper-card rounded-lg p-6">
+<form class="space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Client Name</label>
+<input class="input-base w-full rounded p-3 text-on-surface" placeholder="e.g., Acme Corp" type="text"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Invoice Amount</label>
+<input class="input-base w-full rounded p-3 text-on-surface" placeholder="$0.00" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Days Overdue</label>
+<input class="input-base w-full rounded p-3 text-on-surface" placeholder="0" type="number"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Service/Project</label>
+<input class="input-base w-full rounded p-3 text-on-surface" placeholder="e.g., Website Redesign" type="text"/>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-3 uppercase">Tone Selector</label>
+<div class="flex flex-wrap gap-2">
+<label class="cursor-pointer">
+<input checked="" class="sr-only peer" name="tone" type="radio"/>
+<div class="px-4 py-2 rounded-full bg-[#F1EDE6] text-on-surface-variant peer-checked:bg-primary peer-checked:text-on-primary transition-colors text-sm">Friendly</div>
+</label>
+<label class="cursor-pointer">
+<input class="sr-only peer" name="tone" type="radio"/>
+<div class="px-4 py-2 rounded-full bg-[#F1EDE6] text-on-surface-variant peer-checked:bg-primary peer-checked:text-on-primary transition-colors text-sm">Professional</div>
+</label>
+<label class="cursor-pointer">
+<input class="sr-only peer" name="tone" type="radio"/>
+<div class="px-4 py-2 rounded-full bg-[#F1EDE6] text-on-surface-variant peer-checked:bg-primary peer-checked:text-on-primary transition-colors text-sm">Firm</div>
+</label>
+<label class="cursor-pointer">
+<input class="sr-only peer" name="tone" type="radio"/>
+<div class="px-4 py-2 rounded-full bg-error-container text-on-error-container peer-checked:bg-error peer-checked:text-on-error transition-colors text-sm">Final Notice</div>
+</label>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-button text-button py-3 rounded hover:bg-primary-container transition-colors" type="button">Draft Reminder</button>
+</form>
+</div>
+</section>
+<!-- 2. Loading State -->
+<section class="col-span-12 md:col-span-6 space-y-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">2. Loading State</h2>
+<div class="paper-card rounded-lg p-12 flex flex-col items-center justify-center text-center h-full min-h-[400px]">
+<div class="animate-pulse flex flex-col items-center space-y-6 w-full max-w-md">
+<span class="material-symbols-outlined text-4xl text-primary animate-spin" style="animation-duration: 3s;">hourglass_empty</span>
+<p class="font-headline-sm text-headline-sm text-on-surface">Drafting your reminder...</p>
+<div class="w-full space-y-3">
+<div class="h-4 bg-[#F1EDE6] rounded w-3/4 mx-auto"></div>
+<div class="h-4 bg-[#F1EDE6] rounded w-full"></div>
+<div class="h-4 bg-[#F1EDE6] rounded w-5/6 mx-auto"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Success State -->
+<section class="col-span-12 space-y-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">3. Success State</h2>
+<div class="paper-card rounded-lg p-8">
+<div class="mb-6 flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Your reminder drafts are ready.</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Review and copy the text below to use in your email client.</p>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1 font-button text-sm border border-outline-variant px-3 py-1.5 rounded">
+<span class="material-symbols-outlined text-sm">refresh</span> Start over
+                        </button>
+</div>
+<div class="bg-[#F7F3EC] p-6 rounded border border-outline-variant/50 relative group">
+<button class="absolute top-4 right-4 bg-surface text-on-surface border border-outline-variant px-3 py-1.5 rounded text-sm font-button hover:text-primary transition-colors flex items-center gap-2 opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-sm">content_copy</span> Copy
+                        </button>
+<div class="mb-4 pb-4 border-b border-outline-variant/30">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase mr-2">Subject:</span>
+<span class="font-body-md text-on-surface font-medium">Following up on Invoice #INV-2023-04</span>
+</div>
+<div class="font-body-md text-body-md text-on-surface whitespace-pre-line">Hi [Client Name],
+
+I hope you’re having a good week.
+
+I’m writing to gently remind you that invoice #INV-2023-04 for $1,200.00 (Website Redesign) was due 7 days ago. 
+
+I’ve attached the invoice again for your convenience. Please let me know if you have any questions or if there's an issue with processing the payment.
+
+Best regards,
+[Your Name]</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container full-width border-t border-outline-variant mt-section-gap">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-margin-desktop py-12 max-w-container-max mx-auto gap-gutter">
+<span class="font-headline-sm text-headline-sm text-on-surface">FreelancerReply</span>
+<div class="flex gap-4">
+<a class="text-on-surface-variant font-body-sm hover:text-primary underline transition-all duration-300" href="#">Privacy</a>
+<a class="text-on-surface-variant font-body-sm hover:text-primary underline transition-all duration-300" href="#">Terms</a>
+<a class="text-on-surface-variant font-body-sm hover:text-primary underline transition-all duration-300" href="#">Contact</a>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">© 2024 FreelancerReply. All rights reserved.</span>
+</div>
+</footer>
+</body></html>

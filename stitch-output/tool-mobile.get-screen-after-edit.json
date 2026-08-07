@@ -1,0 +1,24 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"name\":\"projects/6284166158920708265/screens/895c9faa29394390be7b1f1ef76bc0bd\",\"title\":\"Late Payment Reminder Mobile Tool\",\"screenshot\":{\"name\":\"projects/6284166158920708265/files/7980cc817cea4d2e90e3d35949cace1f\",\"downloadUrl\":\"https://lh3.googleusercontent.com/aida/AP1WRLumlb0_xtdCblzCgGWJNe15-VQrKK_EN79aM-pvsuz5bD2ZsBHcOIv7ib6YerbZFyMPNFiMKgBpA2PUUEaXeOfofp0JWIUlaXWqW5-jHufYKihaMbp0ynPqhO5zwLZPPh4wUVaKoM78IJPmOjbIPJ8TBWy_syvyK0TQmhHnaeN7JJDVTtX6po-qKMxXBWrU332A0_ctdrv9bPxPRi1AeSDn4MdWUss04mTfNXpCVDm63-hogHOGgtUDcg\"},\"htmlCode\":{\"name\":\"projects/6284166158920708265/files/753a4cf3d8364b0d8321e855c715dfaf\",\"downloadUrl\":\"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2RmYjM2OGViNmI2NzRiZjNiNDAxMzUyOWJhMDNmYzM3EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242\",\"mimeType\":\"text/html\"},\"width\":\"780\",\"height\":\"6926\",\"deviceType\":\"MOBILE\"}"
+    }
+  ],
+  "structuredContent": {
+    "deviceType": "MOBILE",
+    "height": "6926",
+    "htmlCode": {
+      "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2RmYjM2OGViNmI2NzRiZjNiNDAxMzUyOWJhMDNmYzM3EgoSBhDOj8y6BxgBkgEjCgpwcm9qZWN0X2lkEhVCEzYyODQxNjYxNTg5MjA3MDgyNjU&filename=&opi=96797242",
+      "mimeType": "text/html",
+      "name": "projects/6284166158920708265/files/753a4cf3d8364b0d8321e855c715dfaf"
+    },
+    "name": "projects/6284166158920708265/screens/895c9faa29394390be7b1f1ef76bc0bd",
+    "screenshot": {
+      "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLumlb0_xtdCblzCgGWJNe15-VQrKK_EN79aM-pvsuz5bD2ZsBHcOIv7ib6YerbZFyMPNFiMKgBpA2PUUEaXeOfofp0JWIUlaXWqW5-jHufYKihaMbp0ynPqhO5zwLZPPh4wUVaKoM78IJPmOjbIPJ8TBWy_syvyK0TQmhHnaeN7JJDVTtX6po-qKMxXBWrU332A0_ctdrv9bPxPRi1AeSDn4MdWUss04mTfNXpCVDm63-hogHOGgtUDcg",
+      "name": "projects/6284166158920708265/files/7980cc817cea4d2e90e3d35949cace1f"
+    },
+    "title": "Late Payment Reminder Mobile Tool",
+    "width": "780"
+  }
+}

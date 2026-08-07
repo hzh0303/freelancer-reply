@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FreelancerReply - System States</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#d1ddd5",
+                      "primary-container": "#078372",
+                      "surface": "#f1fcf4",
+                      "on-tertiary-container": "#fffbff",
+                      "error-container": "#ffdad6",
+                      "outline-variant": "#bdc9c5",
+                      "on-primary": "#ffffff",
+                      "on-background": "#141e19",
+                      "on-primary-fixed-variant": "#005045",
+                      "on-secondary-fixed-variant": "#653e00",
+                      "on-surface": "#141e19",
+                      "inverse-surface": "#28332d",
+                      "primary-fixed": "#92f4df",
+                      "on-primary-container": "#f4fffa",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed-variant": "#76321f",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#ffb95f",
+                      "on-tertiary": "#ffffff",
+                      "surface-container": "#e5f1e8",
+                      "tertiary-fixed": "#ffdbd2",
+                      "on-secondary": "#ffffff",
+                      "secondary-container": "#feb557",
+                      "on-primary-fixed": "#00201b",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-container": "#734700",
+                      "tertiary": "#914632",
+                      "outline": "#6e7a76",
+                      "background": "#f1fcf4",
+                      "secondary": "#855300",
+                      "surface-container-highest": "#dae5dd",
+                      "primary": "#00685a",
+                      "on-tertiary-fixed": "#3c0800",
+                      "primary-fixed-dim": "#75d8c3",
+                      "tertiary-fixed-dim": "#ffb4a1",
+                      "on-secondary-fixed": "#2a1700",
+                      "surface-variant": "#dae5dd",
+                      "error": "#ba1a1a",
+                      "inverse-primary": "#75d8c3",
+                      "inverse-on-surface": "#e8f4eb",
+                      "tertiary-container": "#b05e48",
+                      "surface-container-low": "#ebf6ee",
+                      "surface-container-high": "#dfebe3",
+                      "surface-bright": "#f1fcf4",
+                      "surface-tint": "#006b5c",
+                      "secondary-fixed": "#ffddb8",
+                      "on-surface-variant": "#3e4946"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "container-max": "1200px",
+                      "section-gap": "80px",
+                      "unit": "8px",
+                      "margin-desktop": "40px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "Work Sans"
+                      ],
+                      "headline-lg": [
+                              "Newsreader"
+                      ],
+                      "headline-lg-mobile": [
+                              "Newsreader"
+                      ],
+                      "body-md": [
+                              "Work Sans"
+                      ],
+                      "headline-sm": [
+                              "Newsreader"
+                      ],
+                      "body-lg": [
+                              "Work Sans"
+                      ],
+                      "headline-md": [
+                              "Newsreader"
+                      ],
+                      "button": [
+                              "Work Sans"
+                      ],
+                      "body-sm": [
+                              "Work Sans"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "button": [
+                              "15px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #F7F3EC;
+            color: #141e19;
+        }
+        .paper-card {
+            background-color: #FFFEFA;
+            border: 1px solid #DDE5DF;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(23, 33, 28, 0.04);
+            transition: all 300ms ease-in-out;
+        }
+        .paper-card:hover {
+            box-shadow: 0 10px 30px rgba(23, 33, 28, 0.08);
+            transform: translateY(-2px);
+        }
+      </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-inverse-surface w-full top-0 sticky border-b border-outline-variant dark:border-outline shadow-sm z-50">
+<div class="flex justify-between items-center px-margin-desktop h-16 max-w-container-max mx-auto">
+<div class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed font-semibold tracking-tight cursor-pointer hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300">
+                FreelancerReply
+            </div>
+<div class="hidden"></div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 cursor-pointer active:opacity-80 transition-all">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 cursor-pointer active:opacity-80 transition-all">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<img alt="Freelancer Profile" class="h-8 w-8 rounded-full border border-outline-variant object-cover" data-alt="A minimalist avatar placeholder showing a subtle outline of a person on a pale background, reflecting a calm professional aesthetic. The image is simple, flat, and uses high-key lighting. The color palette consists of soft greens and whites, fitting an organized desk vibe. The mood is professional and serene." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBT0nMeHM8VCnnoQRrDNGnZj3z5T7GfYFoAIZ55U1JG-kVryew8F0aok_sjeWbA2bUWoSPuI5lC15aTe1cFgE0-XacMdyF7DbjGdQArrfRHleq9vNeSLDOoOmBLojjtI0MPqw_YbwCoAyfWd53g1JKGcnMR13xrjTbjPmrZHIR7CXO-_2rcSrfbaksY913zzHu62b8QIErpuTzcuiKwGYZCiOt_muyAlvSs5ScIBDw1R4VTe8CTl1PvgSIh3M6PDED9Ala64uojOQ"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center px-margin-mobile md:px-margin-desktop py-section-gap max-w-container-max mx-auto w-full gap-section-gap">
+<div class="text-center max-w-2xl mx-auto mb-gutter">
+<h1 class="font-headline-lg text-headline-lg text-on-background mb-4">System States Overview</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">A collection of calm, informative states designed to reduce cognitive load during interruptions.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter w-full">
+<!-- 404 Panel -->
+<article class="paper-card p-[32px] flex flex-col items-start gap-[24px]">
+<div class="h-12 w-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary border border-outline-variant">
+<span class="material-symbols-outlined text-[24px]" data-icon="mail">mail</span>
+</div>
+<div class="flex flex-col gap-[8px] flex-grow">
+<h2 class="font-headline-md text-headline-md text-on-background">Page not found.</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">The page you are looking for may have moved, or the tool may not be available yet.</p>
+</div>
+<div class="flex flex-col w-full gap-[12px] mt-auto pt-[24px]">
+<button class="w-full bg-[#00685a] hover:bg-opacity-90 text-on-primary font-button text-button py-[12px] px-[24px] rounded-DEFAULT transition-all duration-300 active:scale-[0.98]">
+                        Generate a late payment reminder
+                    </button>
+<button class="w-full bg-transparent border border-[#DDE5DF] hover:bg-surface-container-low text-on-surface font-button text-button py-[12px] px-[24px] rounded-DEFAULT transition-all duration-300">
+                        Back to homepage
+                    </button>
+</div>
+</article>
+<!-- 500 Panel -->
+<article class="paper-card p-[32px] flex flex-col items-start gap-[24px]">
+<div class="h-12 w-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary border border-outline-variant">
+<span class="material-symbols-outlined text-[24px]" data-icon="refresh">refresh</span>
+</div>
+<div class="flex flex-col gap-[8px] flex-grow">
+<h2 class="font-headline-md text-headline-md text-on-background">Something went wrong.</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">We could not load this page. Please try again in a moment.</p>
+</div>
+<div class="flex flex-col w-full gap-[12px] mt-auto pt-[24px]">
+<button class="w-full bg-[#00685a] hover:bg-opacity-90 text-on-primary font-button text-button py-[12px] px-[24px] rounded-DEFAULT transition-all duration-300 active:scale-[0.98]">
+                        Reload page
+                    </button>
+<button class="w-full bg-transparent border border-[#DDE5DF] hover:bg-surface-container-low text-on-surface font-button text-button py-[12px] px-[24px] rounded-DEFAULT transition-all duration-300">
+                        Back to homepage
+                    </button>
+</div>
+</article>
+<!-- Maintenance Panel -->
+<article class="paper-card p-[32px] flex flex-col items-start gap-[24px]">
+<div class="h-12 w-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary border border-outline-variant">
+<span class="material-symbols-outlined text-[24px]" data-icon="build">build</span>
+</div>
+<div class="flex flex-col gap-[8px] flex-grow">
+<h2 class="font-headline-md text-headline-md text-on-background">FreelancerReply is temporarily unavailable.</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">We are working on the beta tool. Please check back later.</p>
+</div>
+<div class="flex flex-col w-full gap-[12px] mt-auto pt-[24px]">
+<button class="w-full bg-[#00685a] hover:bg-opacity-90 text-on-primary font-button text-button py-[12px] px-[24px] rounded-DEFAULT transition-all duration-300 active:scale-[0.98]">
+                        Back to homepage
+                    </button>
+</div>
+</article>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-inverse-surface w-full py-12 border-t border-outline-variant dark:border-outline">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-gutter">
+<div class="font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
+                FreelancerReply
+            </div>
+<nav class="flex gap-gutter items-center">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 underline-offset-4 hover:underline" href="#">Privacy</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 underline-offset-4 hover:underline" href="#">Terms</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 underline-offset-4 hover:underline" href="#">Contact</a>
+</nav>
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+                © 2024 FreelancerReply. Crafted for focus.
+            </div>
+</div>
+</footer>
+</body></html>

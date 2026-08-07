@@ -1,0 +1,2 @@
+export const site = { name:'FreelancerReply', domain:'freelancerreply.com', url:'https://freelancerreply.com', contactEmail:'support@freelancerreply.com', description:'Generate polite client email drafts for freelancers, starting with late payment reminders.'};
+export const routes = { home:'/', tool:'/late-payment-reminder-email-generator', privacy:'/privacy-policy', terms:'/terms-of-service', cookies:'/cookie-policy', refund:'/refund-policy'};

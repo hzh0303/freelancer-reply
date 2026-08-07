@@ -1,0 +1,15 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"name\":\"projects/6284166158920708265\",\"title\":\"FreelancerReply — Calm Inbox Desk Site\",\"visibility\":\"PRIVATE\",\"projectType\":\"PROJECT_DESIGN\",\"origin\":\"STITCH\"}"
+    }
+  ],
+  "structuredContent": {
+    "name": "projects/6284166158920708265",
+    "origin": "STITCH",
+    "projectType": "PROJECT_DESIGN",
+    "title": "FreelancerReply — Calm Inbox Desk Site",
+    "visibility": "PRIVATE"
+  }
+}
