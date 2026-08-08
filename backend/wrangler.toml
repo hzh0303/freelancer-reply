@@ -1,0 +1,51 @@
+name = "freelancer-reply-api"
+main = "src/index.ts"
+compatibility_date = "2026-08-07"
+compatibility_flags = ["nodejs_compat"]
+account_id = "383a99a9945f38a4b206370d43c247ee"
+workers_dev = true
+preview_urls = true
+
+# Custom domain route deferred until freelancerreply.com zone is confirmed in this account.
+# routes = [
+#   { pattern = "api.freelancerreply.com/*", zone_name = "freelancerreply.com" }
+# ]
+
+[vars]
+SITE_NAME = "FreelancerReply"
+SITE_SLUG = "freelancer-reply"
+APP_ORIGIN = "https://freelancerreply.com"
+APP_ORIGINS = "https://freelancerreply.com,https://www.freelancerreply.com,https://freelancer-reply.huangzhenhui0303.workers.dev,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8788,http://127.0.0.1:8788"
+ENVIRONMENT = "production"
+PRODUCT_TYPE = "Late Payment Reminder Email Generator"
+API_VERSION = "2026-08-07.v1"
+FREE_DAILY_GENERATE_LIMIT = "3"
+FREE_HOURLY_GENERATE_LIMIT = "3"
+ANON_LOGIN_DAILY_LIMIT = "30"
+WAITLIST_DAILY_LIMIT = "10"
+AI_PROVIDER_BASE_URL = "https://api.openai.com/v1"
+AI_MODEL = "gpt-4.1-mini"
+ALLOW_TEMPLATE_FALLBACK = "true"
+LOG_RETENTION_DAYS = "30"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "freelancer-reply-db"
+database_id = "b21efcc1-446d-448c-a6e5-67450b3a0087"
+migrations_dir = "migrations"
+
+# R2 is not enabled on this Cloudflare account (API code 10042).
+# P0 does not store uploads or generated files, so deploy proceeds without R2.
+# Target bucket name if later enabled: freelancer-reply-assets
+# [[r2_buckets]]
+# binding = "ASSETS_BUCKET"
+# bucket_name = "freelancer-reply-assets"
+
+[[queues.producers]]
+binding = "TASK_QUEUE"
+queue = "freelancer-reply-tasks"
+
+[[queues.consumers]]
+queue = "freelancer-reply-tasks"
+max_batch_size = 5
+max_batch_timeout = 5

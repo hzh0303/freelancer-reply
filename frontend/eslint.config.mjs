@@ -6,5 +6,5 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   { rules: { 'react-hooks/set-state-in-effect': 'off' } },
-  globalIgnores(['.next/**','out/**','build/**','next-env.d.ts','.open-next/**','worker-configuration.d.ts'])
+  globalIgnores(['.next/**','out/**','build/**','next-env.d.ts','.open-next/**','.wrangler/**','worker-configuration.d.ts'])
 ]);

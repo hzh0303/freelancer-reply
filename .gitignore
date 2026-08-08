@@ -3,6 +3,7 @@ node_modules
 .open-next
 .vercel
 .env*.local
+.dev.vars
 .DS_Store
 npm-debug.log*
 .wrangler
