@@ -8,8 +8,19 @@ export type GenerateApiResponse = {
   disclaimer: string;
   meta?: {
     source?: 'ai_provider' | 'template_fallback';
+    model?: string;
     quota?: { used: number; limit: number; remaining: number; resetAt: string };
     inputStored?: false;
+    usage?: {
+      provider?: string;
+      requestedModel?: string;
+      actualModel?: string;
+      promptTokens?: number;
+      completionTokens?: number;
+      totalTokens?: number;
+      providerCost?: number;
+      providerCostUnit?: string;
+    };
   };
 };
 export type UsageApiResponse = {

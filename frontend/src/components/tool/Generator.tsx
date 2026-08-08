@@ -61,7 +61,7 @@ export function Generator() {
     };
   }, []);
 
-  const drafts = useMemo(() => (apiResult ? mapApiDrafts(apiResult) : makeTemplatePreview(form)), [apiResult, form]);
+  const drafts = useMemo(() => (apiResult ? mapApiDrafts(apiResult) : null), [apiResult]);
 
   async function generate(regen = false) {
     if (!form.clientName || !form.amount || !form.days || !form.project) {
@@ -141,14 +141,14 @@ export function Generator() {
       <div className="paper-card overflow-hidden">
         <div className="border-b border-[var(--border)] bg-white p-6">
           <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your reminder drafts are ready.' : state === 'loading' ? 'Drafting your reminder…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2 text-xs font-bold">{quota.remaining} of {quota.limit} free generations left today</span></div>
-          {apiSource ? <p className="mt-2 text-xs muted">Generation mode: {apiSource === 'template_fallback' ? 'template fallback until AI is connected' : apiSource === 'ai_provider' ? 'AI provider' : 'frontend fallback'}</p> : null}
+          {apiSource ? <p className="mt-2 text-xs muted">Generation mode: {apiSource === 'template_fallback' ? 'Template fallback' : apiSource === 'ai_provider' ? 'Live AI generation' : 'Backend unavailable'}</p> : null}
           {state === 'error' ? <p className="mt-3 text-sm text-red-700">{errorMessage}</p> : <p className="mt-3 text-sm muted">Review each version, adjust anything that does not fit, then copy the version you want to send.</p>}
-          <div className="mt-5 flex flex-wrap gap-2">{drafts.map((d, i) => <button key={d.label} className={`chip ${active === i ? 'chip-active' : ''}`} onClick={() => setActive(i)}>{d.label}</button>)}</div>
+          {drafts ? <div className="mt-5 flex flex-wrap gap-2">{drafts.map((d, i) => <button key={d.label} className={`chip ${active === i ? 'chip-active' : ''}`} onClick={() => setActive(i)}>{d.label}</button>)}</div> : null}
         </div>
         <div className="p-6">
-          {state === 'loading' ? <div className="rounded-xl bg-[var(--paper)] p-8 text-center muted">Creating Gentle, Firm, and Final Notice versions. Please do not refresh.</div> : <Result draft={drafts[active]} copy={copy} />}
+          {state === 'loading' ? <div className="rounded-xl bg-[var(--paper)] p-8 text-center muted">Creating Gentle, Firm, and Final Notice versions. Please do not refresh.</div> : drafts ? <Result draft={drafts[Math.min(active, drafts.length - 1)]} copy={copy} /> : <EmptyResult />}
           <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4 text-xs muted">AI-generated drafts may not fit your specific contract, client relationship, or local rules. This is not legal, financial, accounting, or debt collection advice. Review and edit before sending. Mention late fees, suspension, or legal action only if you have verified that you are allowed to do so.</div>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={() => generate(true)} disabled={state === 'loading'}>Regenerate drafts</button><button className="btn btn-primary" onClick={() => copy(`${drafts[active].subject}\n\n${drafts[active].body}`, 'email')}>Copy email</button></div>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={() => generate(true)} disabled={state === 'loading' || !drafts}>Regenerate drafts</button><button className="btn btn-primary" onClick={() => drafts ? copy(`${drafts[Math.min(active, drafts.length - 1)].subject}\n\n${drafts[Math.min(active, drafts.length - 1)].body}`, 'email') : undefined} disabled={!drafts}>Copy email</button></div>
           <div className="mt-5 grid gap-2 sm:grid-cols-4"><Gate label="Save this client" open={() => openGate('save_client')} /><Gate label="Schedule reminder" open={() => openGate('schedule')} /><Gate label="Export email sequence" open={() => openGate('export')} /><Gate label="Use my brand voice" open={() => openGate('brand_voice')} /></div>
         </div>
       </div>
@@ -165,6 +165,9 @@ export function Generator() {
 
 function Input({ label, value, onChange, helper, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; helper?: string; type?: string }) {
   return <label><span className="label">{label}</span><input className="input mt-1" type={type} value={value} onChange={(e) => onChange(e.target.value)} />{helper ? <span className="mt-1 block text-xs muted">{helper}</span> : null}</label>;
+}
+function EmptyResult() {
+  return <div className="rounded-xl border border-dashed border-[var(--border)] bg-white p-6 text-sm muted">Complete the form and click <span className="font-semibold text-[var(--ink)]">Generate reminder</span>. Results are shown only after the backend returns a successful response.</div>;
 }
 function Result({ draft, copy }: { draft: Draft; copy: (text: string, kind: string) => void }) {
   return <div><p className="label">{draft.badge}</p><p className="mt-2 text-sm muted">{draft.description}</p><Block title="Subject Line" text={draft.subject} onCopy={() => copy(draft.subject, 'subject')} /><Block title="Email Body" text={draft.body} onCopy={() => copy(draft.body, 'email_body')} /><Block title="Short DM / SMS" text={draft.dm} onCopy={() => copy(draft.dm, 'short_dm')} /></div>;
@@ -210,7 +213,4 @@ function messageForApiError(e: { code?: string; status?: number; message?: strin
   if (e.code === 'PROVIDER_UNAVAILABLE' || e.status === 503) return 'The generator is temporarily unavailable. Please try again in a few minutes.';
   if (e.code === 'VALIDATION_ERROR') return e.message || 'Some details are invalid. Please review your inputs.';
   return e.message || 'Something went wrong while generating your draft. Please try again.';
-}
-function makeTemplatePreview(f: { clientName: string; amount: string; days: string; project: string }): Draft[] {
-  return mapApiDrafts({ gentle: { subject: `Quick reminder about the invoice for ${f.project}`, emailBody: `Hi ${f.clientName},\n\nI hope you are doing well. I wanted to send a quick reminder that the ${f.amount} invoice for ${f.project} appears to be ${f.days} days overdue.\n\nCould you let me know when I should expect payment, or if you need anything else from me to process it?\n\nThank you,\n[Your name]`, shortMessage: `Hi ${f.clientName}, quick reminder that the ${f.amount} invoice for ${f.project} is ${f.days} days overdue.` }, firm: { subject: `Follow-up: overdue payment for ${f.project}`, emailBody: `Hi ${f.clientName},\n\nI am following up again on the ${f.amount} invoice for ${f.project}, which is now ${f.days} days overdue.\n\nCould you please confirm the payment status and expected payment date?\n\nThanks,\n[Your name]`, shortMessage: `Hi ${f.clientName}, following up on the ${f.amount} invoice for ${f.project}. Can you confirm payment status?` }, finalNotice: { subject: `Final reminder: overdue invoice for ${f.project}`, emailBody: `Hi ${f.clientName},\n\nThis is a final reminder that the ${f.amount} invoice for ${f.project} remains unpaid and is now ${f.days} days overdue.\n\nPlease arrange payment or send an update by [date].\n\nRegards,\n[Your name]`, shortMessage: `Hi ${f.clientName}, final reminder that the ${f.amount} invoice for ${f.project} is still unpaid.` }, disclaimer: '' });
 }
