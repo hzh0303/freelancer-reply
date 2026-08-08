@@ -12,18 +12,22 @@ type Quota = { used: number; limit: number; remaining: number; resetAt: string }
 const tones: Tone[] = ['Friendly', 'Professional', 'Firm', 'Final Notice'];
 const fallbackQuota: Quota = { used: 0, limit: 3, remaining: 3, resetAt: '' };
 
+function parseTone(value: string | null): Tone {
+  return tones.includes(value as Tone) ? (value as Tone) : 'Professional';
+}
+
 export function Generator() {
   const qs = useSearchParams();
-  const [form, setForm] = useState({
-    clientName: 'Sarah',
-    amount: '$850',
-    days: '12',
-    project: 'Website redesign',
-    tone: 'Professional' as Tone,
+  const [form, setForm] = useState(() => ({
+    clientName: qs.get('clientName') || 'Sarah',
+    amount: qs.get('amount') || '$850',
+    days: qs.get('days') || '12',
+    project: qs.get('project') || 'Website redesign',
+    tone: parseTone(qs.get('tone')),
     invoiceNumber: '',
     paymentLink: '',
     relationship: 'Repeat client'
-  });
+  }));
   const [showAdv, setShowAdv] = useState(false);
   const [state, setState] = useState<'empty' | 'loading' | 'success' | 'error'>('empty');
   const [errorMessage, setErrorMessage] = useState('');
@@ -41,7 +45,7 @@ export function Generator() {
       amount: qs.get('amount') || f.amount,
       days: qs.get('days') || f.days,
       project: qs.get('project') || f.project,
-      tone: (qs.get('tone') as Tone) || f.tone
+      tone: parseTone(qs.get('tone'))
     }));
   }, [qs]);
 
@@ -123,7 +127,7 @@ export function Generator() {
             <legend className="label mb-2">Tone</legend>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {tones.map((t) => (
-                <button type="button" key={t} onClick={() => { setForm({ ...form, tone: t }); track('tone_selected', { tone: t }); }} className={`chip text-left ${form.tone === t ? 'chip-active' : ''}`}>{t}</button>
+                <button type="button" key={t} onClick={() => { setForm({ ...form, tone: t }); track('tone_selected', { tone: t }); }} className={`chip justify-center text-center ${form.tone === t ? 'chip-active' : ''}`}>{t}</button>
               ))}
             </div>
             <p className="mt-2 text-xs muted">Final Notice can sound more serious. Review carefully before sending.</p>
