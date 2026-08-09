@@ -13,7 +13,7 @@
   "workers_dev": true,
   "preview_urls": true,
   "routes": [
-    { "pattern": "freelancerreply.com", "custom_domain": true },
-    { "pattern": "www.freelancerreply.com", "custom_domain": true }
+    { "pattern": "freelancerreply.com/*", "zone_name": "freelancerreply.com" },
+    { "pattern": "www.freelancerreply.com/*", "zone_name": "freelancerreply.com" }
   ]
 }
