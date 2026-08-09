@@ -29,7 +29,7 @@ export const faqs = [
   ['Does FreelancerReply send emails automatically?', 'No. FreelancerReply only creates drafts. You review, edit, copy, and send the message yourself.'],
   ['Is this legal advice?', 'No. FreelancerReply does not provide legal, financial, accounting, tax, debt collection, or professional advice. Reminder stage recommendations are product suggestions, not legal conclusions.'],
   ['Can I mention late fees or legal action?', 'Only mention late fees, service suspension, collections, or legal action if you have verified that your agreement and applicable rules allow it.'],
-  ['Do you store my invoice or client details?', 'The product intent is not to save generator inputs by default. However, inputs may be sent to an AI provider to generate the draft, and quota, analytics, waitlist, or email verification systems may process related data.'],
-  ['What happens if I hit the free limit?', 'You can come back later, verify your email for a higher free quota when available, or join the Pro Waitlist if you want future higher-limit workflow tools.'],
-  ['Is Pro available now?', 'No. Pro is not available in P0. Pro Waitlist is an interest check, not a paid subscription.']
+  ['Do you store my invoice or client details?', 'FreelancerReply is designed not to save generator inputs by default. However, the details you submit may be sent to an AI service to generate the draft, and usage limits, analytics, waitlist, or email verification systems may process related data.'],
+  ['What happens if I hit the free limit?', 'You can come back later, verify your email for a higher free limit when available, or join the Pro Waitlist if you want future higher-limit workflow tools.'],
+  ['Is Pro available now?', 'No. Pro is not available yet. The Pro Waitlist is an interest check, not a paid subscription.']
 ];

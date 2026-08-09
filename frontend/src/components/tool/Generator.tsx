@@ -320,7 +320,7 @@ export function Generator() {
         <h2 className="font-display text-3xl">Tell us what happened</h2>
         <p className="mt-2 text-sm muted">Add the facts needed to recommend the right reminder stage. Avoid entering sensitive information that is not needed for the draft.</p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <Input label="Client name" value={form.clientName} onChange={(v) => setForm({ ...form, clientName: v })} helper="Use a first name, company name, or placeholder." />
+          <Input label="Client name" value={form.clientName} onChange={(v) => setForm({ ...form, clientName: v })} helper="Use a first name, company name, or generic label." />
           <Input label="Invoice amount" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} helper="Used as text only. FreelancerReply does not process payments." />
           <Input label="Days overdue" type="number" value={form.days} onChange={(v) => setForm({ ...form, days: v })} helper="Use 0 if due today. Negative numbers can mean not due yet." />
           <Input label="Project or service" value={form.project} onChange={(v) => setForm({ ...form, project: v })} helper="Example: logo design or web development." />
@@ -365,7 +365,7 @@ export function Generator() {
       <div className="paper-card overflow-hidden">
         <div className="border-b border-[var(--border)] bg-white p-6">
           <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your recommended reminder is ready.' : state === 'loading' ? 'Reviewing the situation…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><div className="flex flex-col gap-2 text-xs font-bold sm:items-end"><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{quota.remaining} of {quota.limit} free sessions left today</span><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{refinementQuota.remaining} of {refinementQuota.limit} adjustments left today</span><span className={`rounded-full px-3 py-2 ${hourlyBlocked ? 'bg-red-50 text-red-800' : 'bg-[var(--primary-soft)]'}`}>{hourlyQuota.remaining} of {hourlyQuota.limit} hourly AI calls left</span></div></div>
-          {apiSource ? <p className="mt-2 text-xs muted">Generation mode: {apiSource === 'template_fallback' ? 'Template fallback' : apiSource === 'ai_provider' ? 'Live AI generation' : 'Backend unavailable'}</p> : null}
+          {apiSource ? <p className="mt-2 text-xs muted">Draft generated. Review and edit before sending.</p> : null}
           {errorMessage || quotaNotice ? <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{errorMessage || quotaNotice}</p> : <p className="mt-3 text-sm muted">Describe the payment situation to get one recommended reminder stage and draft. Nothing is sent automatically.</p>}
         </div>
         <div className="p-6">
@@ -393,7 +393,7 @@ function Input({ label, value, onChange, helper, type = 'text' }: { label: strin
   return <label><span className="label">{label}</span><input className="input mt-1" type={type} value={value} onChange={(e) => onChange(e.target.value)} />{helper ? <span className="mt-1 block text-xs muted">{helper}</span> : null}</label>;
 }
 function EmptyResult() {
-  return <div className="rounded-xl border border-dashed border-[var(--border)] bg-white p-6 text-sm muted"><h3 className="font-display text-2xl text-[var(--ink)]">Ready when you are.</h3><p className="mt-2">Complete the situation form and click <span className="font-semibold text-[var(--ink)]">Get recommended reminder</span>. Results are shown only after the backend returns a successful response.</p></div>;
+  return <div className="rounded-xl border border-dashed border-[var(--border)] bg-white p-6 text-sm muted"><h3 className="font-display text-2xl text-[var(--ink)]">Ready when you are.</h3><p className="mt-2">Complete the situation form and click <span className="font-semibold text-[var(--ink)]">Get recommended reminder</span>. Results are shown only after your draft is ready.</p></div>;
 }
 function Result({ result, copy }: { result: ResultSnapshot; copy: (text: string, kind: string) => void }) {
   return <div><div className="rounded-xl border border-[var(--border)] bg-[var(--primary-soft)] p-4"><p className="label">Recommended stage</p><p className="mt-2 font-display text-3xl">{result.stage}</p><p className="label mt-4">Why this stage?</p><p className="mt-2 text-sm muted">{result.reason}</p>{result.riskNotice ? <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{result.riskNotice}</p> : null}</div><Block title="Subject" text={result.subject} onCopy={() => copy(result.subject, 'subject')} /><Block title="Email" text={result.body} onCopy={() => copy(result.body, 'email_body')} /><Block title="Short DM" text={result.dm} onCopy={() => copy(result.dm, 'short_dm')} /></div>;
