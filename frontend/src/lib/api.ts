@@ -47,6 +47,8 @@ export type UsageApiResponse = {
   ok: boolean;
   usage: {
     generatePaymentReminder: Quota;
+    refinePaymentReminder?: Quota;
+    hourlyAiCalls?: Quota;
     waitlistSubmit: Quota;
   };
 };

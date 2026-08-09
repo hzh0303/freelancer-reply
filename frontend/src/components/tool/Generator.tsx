@@ -50,6 +50,7 @@ type PendingAction = {
   secondaryStage?: ReminderStage;
 };
 const fallbackQuota: Quota = { used: 0, limit: 2, remaining: 2, resetAt: '' };
+const fallbackHourlyQuota: Quota = { used: 0, limit: 4, remaining: 4, resetAt: '' };
 const reminderOptions: { label: string; value: PreviousReminders }[] = [
   { label: 'None', value: 'none' },
   { label: '1 reminder', value: 'one' },
@@ -89,9 +90,10 @@ export function Generator() {
   const [waitlist, setWaitlist] = useState<{ open: boolean; feature?: string }>({ open: false });
   const [result, setResult] = useState<ResultSnapshot | null>(null);
   const [quota, setQuota] = useState<Quota>(fallbackQuota);
+  const [refinementQuota, setRefinementQuota] = useState<Quota>(fallbackQuota);
+  const [hourlyQuota, setHourlyQuota] = useState<Quota>(fallbackHourlyQuota);
   const [apiSource, setApiSource] = useState<'ai_provider' | 'template_fallback' | 'frontend_fallback' | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
-  const [localRefinements, setLocalRefinements] = useState(0);
 
   useEffect(() => {
     setForm((f) => ({
@@ -109,10 +111,7 @@ export function Generator() {
     let alive = true;
     createAnonymousSession()
       .catch(() => null)
-      .then(() => getUsage())
-      .then((usage) => {
-        if (alive) setQuota(usage.usage.generatePaymentReminder);
-      })
+      .then(() => refreshUsage(alive))
       .catch(() => {
         if (alive) setApiSource('frontend_fallback');
       });
@@ -120,6 +119,14 @@ export function Generator() {
       alive = false;
     };
   }, []);
+
+  async function refreshUsage(alive = true) {
+    const usage = await getUsage();
+    if (!alive) return;
+    setQuota(usage.usage.generatePaymentReminder);
+    setRefinementQuota(usage.usage.refinePaymentReminder || fallbackQuota);
+    setHourlyQuota(usage.usage.hourlyAiCalls || fallbackHourlyQuota);
+  }
 
   const recommendation = useMemo(() => recommendStage(form), [form]);
 
@@ -163,7 +170,7 @@ export function Generator() {
       setResult(normalized);
       setQuota(apiResult.meta?.quota || quota);
       setApiSource(apiResult.meta?.source || null);
-      setLocalRefinements(mode === 'initial' ? 0 : (count) => count + 1);
+      await refreshUsage();
       setState('success');
       track('stage_recommended', { stage: normalized.stage, mode });
       track('generator_completed', { stage: normalized.stage, source: apiResult.meta?.source || 'unknown', mode });
@@ -172,6 +179,7 @@ export function Generator() {
       const e = error as Error & { code?: string; status?: number; resetAt?: string };
       setState(result ? 'success' : 'error');
       setErrorMessage(messageForApiError(e));
+      await refreshUsage().catch(() => null);
       track('error_shown', { type: e.code || e.status || 'api_error' });
     }
   }
@@ -189,11 +197,16 @@ export function Generator() {
   }
 
   function preflightLimitMessage(mode: RefinementMode) {
+    if (hourlyQuota.limit > 0 && hourlyQuota.remaining <= 0) {
+      return `Too many AI requests this hour. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`;
+    }
     if (mode === 'initial') {
       if (quota.limit > 0 && quota.remaining <= 0) return `You’ve reached today’s free beta reminder session limit. Come back after ${quota.resetAt ? new Date(quota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
       return '';
     }
-    if (localRefinements >= 1) return 'Free beta includes one follow-up adjustment after each generated reminder. Start over for a new reminder session, or come back after the daily reset for more refinements.';
+    if (refinementQuota.limit > 0 && refinementQuota.remaining <= 0) {
+      return `You’ve reached today’s free beta adjustment limit. Come back after ${refinementQuota.resetAt ? new Date(refinementQuota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
+    }
     return '';
   }
   function openPendingAction(action: PendingAction) {
@@ -256,8 +269,20 @@ export function Generator() {
     setResult(null);
     setState('empty');
     setErrorMessage('');
-    setLocalRefinements(0);
   }
+
+  const hourlyBlocked = hourlyQuota.limit > 0 && hourlyQuota.remaining <= 0;
+  const sessionBlocked = quota.limit > 0 && quota.remaining <= 0;
+  const refinementBlocked = refinementQuota.limit > 0 && refinementQuota.remaining <= 0;
+  const canGenerateInitial = state !== 'loading' && !sessionBlocked && !hourlyBlocked;
+  const canRefine = state !== 'loading' && Boolean(result) && !refinementBlocked && !hourlyBlocked;
+  const quotaNotice = hourlyBlocked
+    ? `Too many AI requests this hour. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`
+    : sessionBlocked
+      ? `You’ve reached today’s free beta reminder session limit. Come back after ${quota.resetAt ? new Date(quota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`
+      : refinementBlocked && result
+        ? `You’ve reached today’s free beta adjustment limit. Come back after ${refinementQuota.resetAt ? new Date(refinementQuota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`
+        : '';
 
   return (
     <section data-clarity-mask="true" className="section grid items-start gap-6 lg:grid-cols-2 mobile-stack">
@@ -297,20 +322,20 @@ export function Generator() {
             <Input label="Invoice number" value={form.invoiceNumber} onChange={(v) => setForm({ ...form, invoiceNumber: v })} helper="Optional. Only include it if you want it in the draft." />
             <Input label="Payment link" value={form.paymentLink} onChange={(v) => setForm({ ...form, paymentLink: v })} helper="Included as text only; not opened, verified, or processed." />
           </> : null}
-          <button className="btn btn-primary sm:col-span-2" onClick={() => generate('initial')} disabled={state === 'loading' || (quota.limit > 0 && quota.remaining <= 0)}>{state === 'loading' ? <span className="inline-flex items-center gap-2"><Spinner /> Generating…</span> : 'Get recommended reminder'}</button>
+          <button className="btn btn-primary sm:col-span-2" onClick={() => generate('initial')} disabled={!canGenerateInitial}>{state === 'loading' ? <span className="inline-flex items-center gap-2"><Spinner /> Generating…</span> : 'Get recommended reminder'}</button>
           <p className="sm:col-span-2 text-xs muted">By generating a draft, you understand that FreelancerReply creates AI-assisted drafts only. It does not provide legal, financial, accounting, or debt collection advice.</p>
         </div>
       </div>
       <div className="paper-card overflow-hidden">
         <div className="border-b border-[var(--border)] bg-white p-6">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your recommended reminder is ready.' : state === 'loading' ? 'Reviewing the situation…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2 text-xs font-bold">{quota.remaining} of {quota.limit} free sessions left today</span></div>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your recommended reminder is ready.' : state === 'loading' ? 'Reviewing the situation…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><div className="flex flex-col gap-2 text-xs font-bold sm:items-end"><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{quota.remaining} of {quota.limit} free sessions left today</span><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{refinementQuota.remaining} of {refinementQuota.limit} adjustments left today</span><span className={`rounded-full px-3 py-2 ${hourlyBlocked ? 'bg-red-50 text-red-800' : 'bg-[var(--primary-soft)]'}`}>{hourlyQuota.remaining} of {hourlyQuota.limit} hourly AI calls left</span></div></div>
           {apiSource ? <p className="mt-2 text-xs muted">Generation mode: {apiSource === 'template_fallback' ? 'Template fallback' : apiSource === 'ai_provider' ? 'Live AI generation' : 'Backend unavailable'}</p> : null}
-          {errorMessage ? <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{errorMessage}</p> : <p className="mt-3 text-sm muted">Describe the payment situation to get one recommended reminder stage and draft. Nothing is sent automatically.</p>}
+          {errorMessage || quotaNotice ? <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{errorMessage || quotaNotice}</p> : <p className="mt-3 text-sm muted">Describe the payment situation to get one recommended reminder stage and draft. Nothing is sent automatically.</p>}
         </div>
         <div className="p-6">
           {state === 'loading' ? <LoadingResult /> : result ? <Result result={result} copy={copy} /> : <EmptyResult />}
           <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4 text-xs muted">AI-generated drafts may not fit your specific contract, client relationship, or local rules. This is not legal, financial, accounting, or debt collection advice. Review and edit before sending. Mention late fees, suspension, collections, or legal action only if you have verified that you are allowed to do so.</div>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={softer} disabled={state === 'loading' || !result || localRefinements >= 1}>Make it softer</button><button className="btn btn-secondary" onClick={firmer} disabled={state === 'loading' || !result || localRefinements >= 1}>Make it firmer</button><button className="btn btn-secondary" onClick={regenerate} disabled={state === 'loading' || !result || localRefinements >= 1}>Regenerate</button><button className="btn btn-primary" onClick={() => result ? copy(`${result.subject}\n\n${result.body}`, 'email') : undefined} disabled={!result || state === 'loading'}>Copy email</button></div>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={softer} disabled={!canRefine}>Make it softer</button><button className="btn btn-secondary" onClick={firmer} disabled={!canRefine}>Make it firmer</button><button className="btn btn-secondary" onClick={regenerate} disabled={!canRefine}>Regenerate</button><button className="btn btn-primary" onClick={() => result ? copy(`${result.subject}\n\n${result.body}`, 'email') : undefined} disabled={!result || state === 'loading'}>Copy email</button></div>
           <div className="mt-5 grid gap-2 sm:grid-cols-4"><Gate label="Generate full sequence" open={() => openGate('full_sequence')} /><Gate label="Save this client" open={() => openGate('save_client')} /><Gate label="Save to history" open={() => openGate('history')} /><Gate label="Use my brand voice" open={() => openGate('brand_voice')} /></div>
           <button className="mt-4 text-sm font-semibold text-[var(--primary)]" type="button" onClick={startOver}>Start over</button>
         </div>
@@ -367,7 +392,13 @@ function Waitlist({ close, feature }: { close: () => void; feature?: string }) {
       return;
     }
     try {
-      await submitWaitlist({ email, role, biggestPaymentProblem: `${featureInterest}; late payment frequency: ${frequency}; pricing willingness: ${willingness}`, sourcePage: window.location.pathname, featureInterest });
+      await submitWaitlist({
+        email,
+        role,
+        biggestPaymentProblem: `${featureInterest}; late payment frequency: ${frequency}; pricing willingness: ${willingness}`,
+        sourcePage: window.location.pathname,
+        featureInterest
+      });
       track('waitlist_submitted', { source: 'modal', feature: featureInterest, willingness });
       setDone(true);
     } catch (e) {
@@ -375,7 +406,31 @@ function Waitlist({ close, feature }: { close: () => void; feature?: string }) {
       track('error_shown', { type: 'waitlist_api' });
     }
   }
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"><div className="paper-card max-w-lg p-6"><h2 className="font-display text-3xl">{done ? 'You’re on the Pro Waitlist.' : 'Want the next follow-up too?'}</h2>{done ? <p className="mt-3 muted">Thanks. We’ll use beta feedback to decide which Pro features to build first.</p> : <><p className="mt-3 muted">FreelancerReply Pro is planned to help with full reminder sequences, saved clients, reminder history, brand voice, and more freelancer email tools. No payment required.</p><label className="mt-5 block"><span className="label">Email address</span><input className="input mt-1" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} /></label><label className="mt-3 block"><span className="label">What kind of freelancer are you?</span><select className="input mt-1" value={role} onChange={(e) => setRole(e.target.value)}>{['Designer', 'Developer', 'Copywriter', 'Marketer', 'Consultant', 'Virtual assistant', 'Solo agency', 'Other'].map((x) => <option key={x}>{x}</option>)}</select></label><label className="mt-3 block"><span className="label">Which Pro feature would help you most?</span><select className="input mt-1" value={featureInterest} onChange={(e) => { setFeatureInterest(e.target.value); track('pro_feature_selected', { feature: e.target.value }); }}>{['Full reminder sequence', 'Saved clients', 'Reminder history', 'Brand voice', 'More freelancer email tools', 'Higher usage limits', 'Not sure yet'].map((x) => <option key={x}>{x}</option>)}</select></label><label className="mt-3 block"><span className="label">How often do clients pay late?</span><select className="input mt-1" value={frequency} onChange={(e) => setFrequency(e.target.value)}>{['Rarely', 'A few times a year', 'Monthly', 'Often', 'Prefer not to say'].map((x) => <option key={x}>{x}</option>)}</select></label><label className="mt-3 block"><span className="label">What would feel reasonable if Pro launches?</span><select className="input mt-1" value={willingness} onChange={(e) => { setWillingness(e.target.value); track('pricing_willingness_selected', { value: e.target.value }); }}>{['$5/month', '$9/month', '$19/month', 'One-time payment', 'Not sure yet', 'I only want the free beta'].map((x) => <option key={x}>{x}</option>)}</select></label>{error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}<p className="mt-2 text-xs muted">By joining the waitlist, you agree that we may store your email to contact you about FreelancerReply. You can request deletion later.</p></>}<div className="mt-5 flex gap-2">{done ? null : <button className="btn btn-primary" onClick={submit}>Join Pro Waitlist</button>}<button className="btn btn-secondary" onClick={close}>{done ? 'Back to generator' : 'Not now'}</button></div></div></div>;
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4">
+      <div className="paper-card max-w-lg p-6">
+        <h2 className="font-display text-3xl">{done ? 'You’re on the Pro Waitlist.' : 'Want the next follow-up too?'}</h2>
+        {done ? (
+          <p className="mt-3 muted">Thanks. We’ll use beta feedback to decide which Pro features to build first.</p>
+        ) : (
+          <>
+            <p className="mt-3 muted">FreelancerReply Pro is planned to help with full reminder sequences, saved clients, reminder history, brand voice, and more freelancer email tools. No payment required.</p>
+            <label className="mt-5 block"><span className="label">Email address</span><input className="input mt-1" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+            <label className="mt-3 block"><span className="label">What kind of freelancer are you?</span><select className="input mt-1" value={role} onChange={(e) => setRole(e.target.value)}>{['Designer', 'Developer', 'Copywriter', 'Marketer', 'Consultant', 'Virtual assistant', 'Solo agency', 'Other'].map((x) => <option key={x}>{x}</option>)}</select></label>
+            <label className="mt-3 block"><span className="label">Which Pro feature would help you most?</span><select className="input mt-1" value={featureInterest} onChange={(e) => { setFeatureInterest(e.target.value); track('pro_feature_selected', { feature: e.target.value }); }}>{['Full reminder sequence', 'Saved clients', 'Reminder history', 'Brand voice', 'More freelancer email tools', 'Higher usage limits', 'Not sure yet'].map((x) => <option key={x}>{x}</option>)}</select></label>
+            <label className="mt-3 block"><span className="label">How often do clients pay late?</span><select className="input mt-1" value={frequency} onChange={(e) => setFrequency(e.target.value)}>{['Rarely', 'A few times a year', 'Monthly', 'Often', 'Prefer not to say'].map((x) => <option key={x}>{x}</option>)}</select></label>
+            <label className="mt-3 block"><span className="label">What would feel reasonable if Pro launches?</span><select className="input mt-1" value={willingness} onChange={(e) => { setWillingness(e.target.value); track('pricing_willingness_selected', { value: e.target.value }); }}>{['$5/month', '$9/month', '$19/month', 'One-time payment', 'Not sure yet', 'I only want the free beta'].map((x) => <option key={x}>{x}</option>)}</select></label>
+            {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+            <p className="mt-2 text-xs muted">By joining the waitlist, you agree that we may store your email to contact you about FreelancerReply. You can request deletion later.</p>
+          </>
+        )}
+        <div className="mt-5 flex gap-2">
+          {done ? null : <button className="btn btn-primary" onClick={submit}>Join Pro Waitlist</button>}
+          <button className="btn btn-secondary" onClick={close}>{done ? 'Back to generator' : 'Not now'}</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function recommendStage(form: FormState): Recommendation {

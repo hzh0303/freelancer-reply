@@ -14,6 +14,8 @@ const routes = [
 const widths = [320, 375, 390, 768, 1024];
 const errors = [];
 let generateCalls = 0;
+let initialCalls = 0;
+let refinementCalls = 0;
 
 function countPrevious(value) {
   return value === 'none' ? 0 : value === 'one' ? 1 : value === 'two' ? 2 : 3;
@@ -55,7 +57,9 @@ async function installApiMocks(page) {
       body: JSON.stringify({
         ok: true,
         usage: {
-          generatePaymentReminder: { used: 0, limit: 2, remaining: 2, resetAt: '' },
+          generatePaymentReminder: { used: initialCalls, limit: 2, remaining: Math.max(0, 2 - initialCalls), resetAt: '' },
+          refinePaymentReminder: { used: refinementCalls, limit: 2, remaining: Math.max(0, 2 - refinementCalls), resetAt: '' },
+          hourlyAiCalls: { used: generateCalls, limit: 4, remaining: Math.max(0, 4 - generateCalls), resetAt: '' },
           waitlistSubmit: { used: 0, limit: 3, remaining: 3, resetAt: '' }
         }
       })
@@ -64,6 +68,8 @@ async function installApiMocks(page) {
   await page.route('**/api/generate-payment-reminder', async (route) => {
     generateCalls += 1;
     const input = route.request().postDataJSON();
+    if (input.refinementMode === 'initial' || !input.refinementMode) initialCalls += 1;
+    else refinementCalls += 1;
     const stage = input.recommendedStage || recommend(input.daysOverdue, input.previousRemindersSent);
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(draft(stage, input)) });
   });
@@ -194,8 +200,16 @@ try {
   await page.getByRole('button', { name: 'Generate another Firm Reminder' }).click();
   await page.getByText('Your recommended reminder is ready.').waitFor({ timeout: 5000 });
   if (generateCalls !== beforeFinalChoice + 1) throw new Error('final-choice secondary action should call generate exactly once');
+  if (await page.getByRole('button', { name: 'Make it firmer' }).isDisabled()) throw new Error('refinement buttons should remain enabled when one backend refinement remains');
+
+  await page.getByRole('button', { name: 'Make it softer' }).click();
+  await page.getByText('Make this reminder softer?').waitFor({ timeout: 5000 });
+  const beforeSecondAdjustment = generateCalls;
+  await page.getByRole('button', { name: 'Generate softer draft' }).click();
+  await page.getByText('Your recommended reminder is ready.').waitFor({ timeout: 5000 });
+  if (generateCalls !== beforeSecondAdjustment + 1) throw new Error('second refinement should call generate exactly once');
   await page.getByRole('button', { name: 'Make it firmer' }).waitFor({ state: 'attached' });
-  if (!(await page.getByRole('button', { name: 'Make it firmer' }).isDisabled())) throw new Error('refinement buttons should be disabled after one adjustment');
+  if (!(await page.getByRole('button', { name: 'Make it firmer' }).isDisabled())) throw new Error('refinement buttons should be disabled after backend refinement quota is exhausted');
 
   if (errors.length) throw new Error(`Console/page errors: ${errors.join('\n')}`);
   console.log(JSON.stringify({ ok: true, base, routes: routes.length, widths, consoleErrors: errors }, null, 2));

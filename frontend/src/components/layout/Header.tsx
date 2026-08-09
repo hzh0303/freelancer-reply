@@ -47,7 +47,7 @@ export function Header() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (window.location.hash === '#waitlist') return;
+        if (window.location.hash) return;
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
