@@ -108,6 +108,11 @@ try {
     await page.goto(`${base}/`, { waitUntil: 'networkidle' });
     await page.locator('header').getByRole('link', { name: item.name, exact: true }).click();
     await page.waitForFunction((hash) => window.location.hash === hash, item.hash);
+    await page.waitForFunction((selector) => {
+      const rect = document.querySelector(selector)?.getBoundingClientRect();
+      return rect && rect.top >= 70 && rect.top < window.innerHeight;
+    }, item.target);
+    await page.waitForFunction((name) => document.querySelector('a[aria-current="page"]')?.textContent?.trim() === name, item.name);
     const navCheck = await page.evaluate((targetSelector) => {
       const header = document.querySelector('header')?.getBoundingClientRect();
       const target = document.querySelector(targetSelector)?.getBoundingClientRect();

@@ -40,13 +40,14 @@ export function Header() {
       return;
     }
 
-    const sections = ['#example', '#pricing', '#waitlist', '#faq']
+    const sections = ['#example', '#pricing', '#faq']
       .map((hash) => document.querySelector(hash))
       .filter(Boolean) as Element[];
     if (!sections.length) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
+        if (window.location.hash === '#waitlist') return;
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
