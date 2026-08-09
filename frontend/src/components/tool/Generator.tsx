@@ -191,8 +191,8 @@ export function Generator() {
       setResult(normalized);
       setQuota(apiResult.meta?.quota || quota);
       setApiSource(apiResult.meta?.source || null);
-      await refreshUsage();
       setState('success');
+      refreshUsage().catch(() => null);
       track('stage_recommended', { stage: normalized.stage, mode });
       track('generator_completed', { stage: normalized.stage, source: apiResult.meta?.source || 'unknown', mode });
       if (normalized.stage === 'Final Notice') track('final_notice_warning_shown', { mode });

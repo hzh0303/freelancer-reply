@@ -17,6 +17,7 @@ let generateCalls = 0;
 let initialCalls = 0;
 let refinementCalls = 0;
 let currentReminderSessionId = '';
+let hangUsageAfterGenerate = false;
 
 function countPrevious(value) {
   return value === 'none' ? 0 : value === 'one' ? 1 : value === 'two' ? 2 : 3;
@@ -53,8 +54,9 @@ async function installApiMocks(page) {
   await page.route('**/api/auth/login', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) })
   );
-  await page.route('**/api/usage', (route) =>
-    route.fulfill({
+  await page.route('**/api/usage', (route) => {
+    if (hangUsageAfterGenerate) return;
+    return route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
@@ -66,10 +68,11 @@ async function installApiMocks(page) {
           waitlistSubmit: { used: 0, limit: 3, remaining: 3, resetAt: '' }
         }
       })
-    })
-  );
+    });
+  });
   await page.route('**/api/generate-payment-reminder', async (route) => {
     generateCalls += 1;
+    hangUsageAfterGenerate = true;
     const input = route.request().postDataJSON();
     if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && input.turnstileToken !== 'smoke-turnstile-token') {
       await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ ok: false, code: 'TURNSTILE_FAILED', message: 'Bot protection token is required.' }) });
