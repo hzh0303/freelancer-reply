@@ -3,28 +3,36 @@ import { Suspense } from 'react';
 import { PageShell } from '@/components/layout/PageShell';
 import { Generator } from '@/components/tool/Generator';
 import { faqs } from '@/data/content';
-import { site } from '@/lib/site';
+import { absoluteUrl, pageMetadata, site } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Late Payment Reminder Email Generator for Freelancers',
-  description:
-    'Describe an overdue invoice situation and get one recommended payment reminder draft with a subject line, email body, short DM, and clear stage reason.',
-  alternates: { canonical: '/late-payment-reminder-email-generator' },
-  openGraph: {
-    title: 'Late Payment Reminder Email Generator for Freelancers',
+  ...pageMetadata({
+    title: 'Late Payment Reminder Generator',
     description:
-      'Get a situation-aware overdue invoice reminder draft. Review, edit, copy, and send it yourself.'
-  }
+      'Describe an overdue invoice and get a polite reminder draft with a subject line, email body, short DM, and clear stage reason to review before sending.',
+    path: '/late-payment-reminder-email-generator'
+  })
 };
 
 export default function ToolPage() {
   const app = {
     '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
+    '@type': 'WebApplication',
+    '@id': `${site.url}/late-payment-reminder-email-generator#app`,
     name: 'Late Payment Reminder Email Generator',
+    description:
+      'A free beta web tool that drafts polite late payment reminder emails for freelancers to review, edit, copy, and send themselves.',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
+    browserRequirements: 'Requires a modern web browser with JavaScript enabled.',
     url: `${site.url}/late-payment-reminder-email-generator`,
+    image: absoluteUrl(site.ogImage),
+    publisher: {
+      '@type': 'Organization',
+      name: site.name,
+      url: site.url
+    },
+    isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
   };
 

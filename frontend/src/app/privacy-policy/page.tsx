@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
 import { PageShell } from '@/components/layout/PageShell';
 import { LegalPage } from '@/components/legal/LegalPage';
-import { site } from '@/lib/site';
+import { pageMetadata, site } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'Privacy Policy for FreelancerReply.',
-  alternates: { canonical: '/privacy-policy' }
+  ...pageMetadata({
+    title: 'Privacy Policy',
+    description:
+      'Learn how FreelancerReply handles generator inputs, waitlist emails, analytics consent, Cloudflare security checks, and AI-assisted drafting data.',
+    path: '/privacy-policy'
+  })
 };
 
 export default function Privacy() {

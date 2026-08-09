@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
 import { PageShell } from '@/components/layout/PageShell';
 import { LegalPage } from '@/components/legal/LegalPage';
-import { site } from '@/lib/site';
+import { pageMetadata, site } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service',
-  description: 'Terms of Service for FreelancerReply.',
-  alternates: { canonical: '/terms-of-service' }
+  ...pageMetadata({
+    title: 'Terms of Service',
+    description:
+      'Review the terms for using FreelancerReply, including AI draft review responsibilities, prohibited uses, beta features, and service limitations.',
+    path: '/terms-of-service'
+  })
 };
 
 export default function Terms() {

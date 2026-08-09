@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
 import { PageShell } from '@/components/layout/PageShell';
 import { LegalPage } from '@/components/legal/LegalPage';
-import { site } from '@/lib/site';
+import { pageMetadata, site } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy',
-  description: 'Cookie Policy for FreelancerReply.',
-  alternates: { canonical: '/cookie-policy' }
+  ...pageMetadata({
+    title: 'Cookie Policy',
+    description:
+      'See how FreelancerReply uses essential storage, anonymous sessions, Cloudflare Turnstile, and optional analytics after consent.',
+    path: '/cookie-policy'
+  })
 };
 
 export default function Cookies() {
