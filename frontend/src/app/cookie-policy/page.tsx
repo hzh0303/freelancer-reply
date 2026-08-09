@@ -27,6 +27,7 @@ export default function Cookies() {
             title: '2. Essential functionality',
             body: [
               'We may use essential cookies, local storage, or session storage for consent choices, anonymous sessions, free usage limits, Cloudflare Turnstile or similar security checks, and core product functionality. Blocking some storage or security checks may affect site behavior or stop protected actions such as draft generation.',
+              'Essential technologies may include an anonymous session cookie, consent storage such as freelancerreply_analytics_consent, quota-related identifiers, and Cloudflare Turnstile security tokens.',
               'Cloudflare Turnstile may process browser, device, network, and challenge-result information to help distinguish normal use from automated abuse.'
             ]
           },
@@ -34,6 +35,7 @@ export default function Cookies() {
             title: '3. Analytics',
             body: [
               'Optional analytics may help us understand traffic and product usage only after you accept analytics. If analytics is not configured, no optional analytics scripts are loaded.',
+              'Optional analytics may include Plausible, Google Analytics, Microsoft Clarity, Ahrefs Analytics, or similar tools if configured and accepted.',
               'Analytics events should not include raw generator inputs, generated draft text, payment details, or confidential client information.'
             ]
           },

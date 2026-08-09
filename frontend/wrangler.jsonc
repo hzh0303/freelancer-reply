@@ -1,1 +1,19 @@
-{"name":"freelancer-reply","main":".open-next/worker.js","compatibility_date":"2026-08-01","compatibility_flags":["nodejs_compat"],"assets":{"directory":".open-next/assets","binding":"ASSETS"},"observability":{"enabled":true},"workers_dev":true,"preview_urls":true}
+{
+  "name": "freelancer-reply",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [
+    { "pattern": "freelancerreply.com", "custom_domain": true },
+    { "pattern": "www.freelancerreply.com", "custom_domain": true }
+  ]
+}

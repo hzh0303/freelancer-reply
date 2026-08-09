@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     title: 'FreelancerReply — Payment Reminder Email Generator',
     description: 'Get one recommended late payment reminder draft for your freelance invoice situation.'
   },
+  verification: { google: 'GE82_YkM9w41urQVzZA_Cq8HtJmvW6naJqECBqBtODY' },
   icons: { icon: '/favicon.svg' }
 };
 

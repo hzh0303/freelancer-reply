@@ -20,7 +20,7 @@ export default function Terms() {
           {
             title: '1. What FreelancerReply does',
             body: [
-              'FreelancerReply helps users draft client communication emails, starting with late payment reminder emails for freelancers. The service may generate subject lines, email bodies, gentle, firm, final reminder versions, and short DM or SMS drafts.',
+              'FreelancerReply helps users draft client communication emails, starting with late payment reminder emails for freelancers. The service may generate a recommended reminder draft, including a subject line, email body, and short DM or SMS draft. You may also request limited adjustments such as making the draft softer, firmer, or regenerating it.',
               'FreelancerReply does not send emails automatically. You are responsible for reviewing, editing, copying, and sending any message yourself.'
             ]
           },
@@ -28,6 +28,7 @@ export default function Terms() {
             title: '2. AI-generated drafts',
             body: [
               'FreelancerReply uses AI services, such as OpenRouter or another AI service, to help create drafts from the information you provide. AI-generated content may be inaccurate, incomplete, inappropriate, or unsuitable for your situation.',
+              'FreelancerReply does not guarantee that a draft will result in payment, comply with your contract or local rules, or be appropriate for every client relationship.',
               'You must review and edit every draft before using it. Do not rely on generated drafts as professional advice or as a final statement of your legal, financial, accounting, tax, or collection rights.'
             ]
           },
@@ -64,7 +65,13 @@ export default function Terms() {
             ]
           },
           {
-            title: '8. Contact',
+            title: '8. Free beta limits',
+            body: [
+              'Free beta usage is limited. Current free beta limits may include a limited number of reminder sessions per day and a limited number of adjustments per reminder session, and protected draft requests may also be subject to hourly abuse-prevention limits. Limits may change during beta.'
+            ]
+          },
+          {
+            title: '9. Contact',
             body: [`Contact: ${site.contactEmail}. Website: ${site.url}.`]
           }
         ]}
