@@ -306,18 +306,29 @@ async function handleGenerate(request: Request, env: Env, ctx: ExecutionContext)
     if (!turnstile.success) return errorJson('TURNSTILE_FAILED', 'Bot protection check failed.', 403, request, env);
   }
 
-  const ipActor = await getIpActor(request, env);
-  const ipHourly = await consumeQuota(env, ipActor, `${ACTION_GENERATE}:hourly`, 1, request, 'hourly');
-  if (!ipHourly.allowed) return errorJson('RATE_LIMITED', 'Too many generation requests this hour.', 429, request, env, { resetAt: ipHourly.resetAt });
-
   const quotaAction = safeInput.refinementMode === 'initial' ? ACTION_GENERATE : ACTION_REFINE;
+  const quotaPreview = await checkQuota(env, actor, quotaAction, 1, 'daily');
+  if (!quotaPreview.allowed) {
+    await logUsage(env, actor, request, quotaAction, 1, 'rejected_quota');
+    const message = quotaAction === ACTION_GENERATE ? 'Free beta daily reminder session quota reached.' : 'Free beta daily refinement quota reached.';
+    return errorJson('QUOTA_EXCEEDED', message, 402, request, env, { resetAt: quotaPreview.resetAt });
+  }
+
+  let reminderSessionPreview: ReminderSessionView | undefined;
   let reminderSession: { id: string; refinementCount: number; refinementLimit: number } | undefined;
   if (safeInput.refinementMode !== 'initial') {
-    const sessionQuota = await consumeReminderSessionRefinement(env, actor, safeInput.reminderSessionId!, request);
-    if (sessionQuota.allowed === false) {
-      return errorJson(sessionQuota.code, sessionQuota.message, sessionQuota.status, request, env, sessionQuota.extra || {});
+    const sessionAvailability = await checkReminderSessionRefinement(env, actor, safeInput.reminderSessionId!, request);
+    if (sessionAvailability.allowed === false) {
+      return errorJson(sessionAvailability.code, sessionAvailability.message, sessionAvailability.status, request, env, sessionAvailability.extra || {});
     }
-    reminderSession = sessionQuota.session;
+    reminderSessionPreview = sessionAvailability.session;
+  }
+
+  const ipActor = await getIpActor(request, env);
+  const ipHourlyPreview = await checkQuota(env, ipActor, `${ACTION_GENERATE}:hourly`, 1, 'hourly');
+  if (!ipHourlyPreview.allowed) {
+    await logUsage(env, ipActor, request, `${ACTION_GENERATE}:hourly`, 1, 'rejected_rate_limit');
+    return errorJson('RATE_LIMITED', 'Too many generation requests this hour.', 429, request, env, { resetAt: ipHourlyPreview.resetAt });
   }
 
   const quota = await consumeQuota(env, actor, quotaAction, 1, request, 'daily');
@@ -325,6 +336,15 @@ async function handleGenerate(request: Request, env: Env, ctx: ExecutionContext)
     const message = quotaAction === ACTION_GENERATE ? 'Free beta daily reminder session quota reached.' : 'Free beta daily refinement quota reached.';
     return errorJson('QUOTA_EXCEEDED', message, 402, request, env, { resetAt: quota.resetAt });
   }
+  if (safeInput.refinementMode !== 'initial') {
+    const sessionQuota = await consumeReminderSessionRefinement(env, actor, safeInput.reminderSessionId!, request);
+    if (sessionQuota.allowed === false) {
+      return errorJson(sessionQuota.code, sessionQuota.message, sessionQuota.status, request, env, sessionQuota.extra || { reminderSession: reminderSessionPreview });
+    }
+    reminderSession = sessionQuota.session;
+  }
+  const ipHourly = await consumeQuota(env, ipActor, `${ACTION_GENERATE}:hourly`, 1, request, 'hourly');
+  if (!ipHourly.allowed) return errorJson('RATE_LIMITED', 'Too many generation requests this hour.', 429, request, env, { resetAt: ipHourly.resetAt });
   const taskId = crypto.randomUUID();
   const inputHash = await hmac(JSON.stringify(safeInput), env.SESSION_SECRET);
   await env.DB.prepare(`INSERT INTO tasks (id, task_type, status, input_hash, created_at) VALUES (?, 'generate_payment_reminder', 'completed', ?, ?)`).bind(taskId, inputHash, new Date().toISOString()).run();
@@ -450,6 +470,14 @@ async function consumeQuota(env: Env, actor: Actor, action: string, units: numbe
   return { allowed: true, remaining: Math.max(0, quota.quota_limit - quota.used - units), resetAt: quota.reset_at };
 }
 
+async function checkQuota(env: Env, actor: Actor, action: string, units: number, period: 'daily' | 'hourly' = 'daily') {
+  const quota = await readOrCreateQuota(env, actor, action, period);
+  if (quota.used + units > quota.quota_limit) {
+    return { allowed: false, remaining: Math.max(0, quota.quota_limit - quota.used), resetAt: quota.reset_at };
+  }
+  return { allowed: true, remaining: Math.max(0, quota.quota_limit - quota.used - units), resetAt: quota.reset_at };
+}
+
 async function createReminderSession(env: Env, actor: Actor, request: Request, taskId: string, inputHash: string, recommendedStage: ReminderStage): Promise<ReminderSessionView> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -468,6 +496,28 @@ async function createReminderSession(env: Env, actor: Actor, request: Request, t
     now
   ).run();
   return { id, refinementCount: 0, refinementLimit };
+}
+
+async function checkReminderSessionRefinement(env: Env, actor: Actor, reminderSessionId: string, request: Request): Promise<ReminderSessionConsumeResult> {
+  const row = await env.DB.prepare(`SELECT id, user_id, anon_id, refinement_count, refinement_limit FROM reminder_sessions WHERE id = ?`).bind(reminderSessionId).first<any>();
+  const owned = row && (actor.userId ? row.user_id === actor.userId : row.anon_id === actor.actorId);
+  if (!owned) {
+    await logUsage(env, actor, request, ACTION_REFINE, 0, 'rejected_reminder_session_not_found', { reminderSessionId });
+    return { allowed: false, code: 'REMINDER_SESSION_NOT_FOUND', message: 'Reminder session was not found for this actor.', status: 404 };
+  }
+  const refinementCount = Number(row.refinement_count || 0);
+  const refinementLimit = Number(row.refinement_limit || 0);
+  if (refinementCount >= refinementLimit) {
+    await logUsage(env, actor, request, ACTION_REFINE, 0, 'rejected_reminder_session_refinement_limit', { reminderSessionId });
+    return {
+      allowed: false,
+      code: 'REMINDER_SESSION_REFINEMENT_LIMIT_REACHED',
+      message: 'This reminder session has already used its free beta refinement.',
+      status: 402,
+      extra: { reminderSession: { id: row.id, refinementCount, refinementLimit } }
+    };
+  }
+  return { allowed: true, session: { id: row.id, refinementCount, refinementLimit } };
 }
 
 async function consumeReminderSessionRefinement(env: Env, actor: Actor, reminderSessionId: string, request: Request): Promise<ReminderSessionConsumeResult> {

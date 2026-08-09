@@ -23,6 +23,15 @@ test('per-reminder-session refinement contract is implemented end-to-end', () =>
   assert.match(source, /REMINDER_SESSION_REQUIRED/, 'refinement without reminderSessionId should be rejected');
   assert.match(source, /REMINDER_SESSION_REFINEMENT_LIMIT_REACHED/, 'second refinement on same session should be rejected');
 
+  const dailyQuotaIndex = source.indexOf('const quotaPreview = await checkQuota(env, actor, quotaAction, 1, \'daily\')');
+  const sessionQuotaIndex = source.indexOf('const sessionAvailability = await checkReminderSessionRefinement');
+  const hourlyQuotaIndex = source.indexOf('const ipHourlyPreview = await checkQuota(env, ipActor');
+  assert.ok(dailyQuotaIndex > 0, 'daily product quota should be checked in handleGenerate');
+  assert.ok(sessionQuotaIndex > 0, 'per-session refinement quota should be checked in handleGenerate');
+  assert.ok(hourlyQuotaIndex > 0, 'hourly AI rate limit should be checked in handleGenerate');
+  assert.ok(dailyQuotaIndex < sessionQuotaIndex, 'daily product quota should be checked before consuming per-session refinement quota');
+  assert.ok(dailyQuotaIndex < hourlyQuotaIndex, 'daily product quota should be checked before hourly AI rate limit for user-friendly errors');
+
   const schema = apiContract.paths['/api/generate-payment-reminder'].post.requestBody.content['application/json'].schema;
   assert.ok(schema.properties.reminderSessionId, 'API contract should document reminderSessionId');
   assert.match(apiContract.paths['/api/generate-payment-reminder'].post.responses['200'].description, /reminderSessionId/);
