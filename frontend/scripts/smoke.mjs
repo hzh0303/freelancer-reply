@@ -16,6 +16,7 @@ const errors = [];
 let generateCalls = 0;
 let initialCalls = 0;
 let refinementCalls = 0;
+let currentReminderSessionId = '';
 
 function countPrevious(value) {
   return value === 'none' ? 0 : value === 'one' ? 1 : value === 'two' ? 2 : 3;
@@ -41,7 +42,9 @@ function draft(stage, input) {
     disclaimer: 'Smoke test disclaimer.',
     meta: {
       source: 'template_fallback',
-      quota: { used: 1, limit: 2, remaining: 1, resetAt: '' }
+      quota: { used: 1, limit: 2, remaining: 1, resetAt: '' },
+      reminderSessionId: currentReminderSessionId,
+      reminderSession: { id: currentReminderSessionId, refinementCount: refinementCalls, refinementLimit: 2 }
     }
   };
 }
@@ -72,8 +75,16 @@ async function installApiMocks(page) {
       await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ ok: false, code: 'TURNSTILE_FAILED', message: 'Bot protection token is required.' }) });
       return;
     }
-    if (input.refinementMode === 'initial' || !input.refinementMode) initialCalls += 1;
-    else refinementCalls += 1;
+    if (input.refinementMode === 'initial' || !input.refinementMode) {
+      initialCalls += 1;
+      currentReminderSessionId = `00000000-0000-4000-8000-${String(initialCalls).padStart(12, '0')}`;
+    } else {
+      if (input.reminderSessionId !== currentReminderSessionId) {
+        await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ ok: false, code: 'REMINDER_SESSION_REQUIRED', message: 'reminderSessionId is required for refinements.' }) });
+        return;
+      }
+      refinementCalls += 1;
+    }
     const stage = input.recommendedStage || recommend(input.daysOverdue, input.previousRemindersSent);
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(draft(stage, input)) });
   });
@@ -161,7 +172,7 @@ try {
   for (const width of widths) {
     await page.setViewportSize({ width, height: 1000 });
     for (const r of ['/', '/late-payment-reminder-email-generator', '/privacy-policy', '/terms-of-service']) {
-      await page.goto(`${base}${r}`, { waitUntil: 'networkidle' });
+      await page.goto(`${base}${r}`, { waitUntil: 'domcontentloaded' });
       const m = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth,

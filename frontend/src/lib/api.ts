@@ -23,6 +23,8 @@ export type GenerateMeta = {
     providerCost?: number;
     providerCostUnit?: string;
   };
+  reminderSessionId?: string;
+  reminderSession?: { id: string; refinementCount: number; refinementLimit: number };
 };
 
 export type LegacyGenerateApiResponse = {
@@ -96,6 +98,7 @@ export async function generatePaymentReminder(input: {
   paymentLink?: string;
   clientRelationship?: string;
   turnstileToken?: string;
+  reminderSessionId?: string;
 }) {
   return apiFetch<GenerateApiResponse>('/api/generate-payment-reminder', {
     method: 'POST',

@@ -37,6 +37,8 @@ type ResultSnapshot = {
   disclaimer?: string;
   refinementMode: RefinementMode;
   submittedForm: FormState;
+  reminderSessionId?: string;
+  reminderSession?: { id: string; refinementCount: number; refinementLimit: number };
 };
 
 type Recommendation = { stage: ReminderStage; reason: string; riskNotice?: string };
@@ -182,7 +184,8 @@ export function Generator() {
         invoiceNumber: submitted.invoiceNumber || undefined,
         paymentLink: submitted.paymentLink || undefined,
         clientRelationship: submitted.relationship || undefined,
-        turnstileToken: turnstileToken || undefined
+        turnstileToken: turnstileToken || undefined,
+        reminderSessionId: mode === 'initial' ? undefined : result?.reminderSessionId
       });
       const normalized = normalizeApiResult(apiResult, stage, reason, mode, submitted);
       setResult(normalized);
@@ -295,15 +298,21 @@ export function Generator() {
   const sessionBlocked = quota.limit > 0 && quota.remaining <= 0;
   const refinementBlocked = refinementQuota.limit > 0 && refinementQuota.remaining <= 0;
   const turnstileBlocked = Boolean(turnstileSiteKey) && !turnstileToken;
+  const missingReminderSession = Boolean(result) && !result?.reminderSessionId;
+  const sessionRefinementBlocked = Boolean(result?.reminderSession && result.reminderSession.refinementCount >= result.reminderSession.refinementLimit);
   const canGenerateInitial = state !== 'loading' && !sessionBlocked && !hourlyBlocked && !turnstileBlocked;
-  const canRefine = state !== 'loading' && Boolean(result) && !refinementBlocked && !hourlyBlocked && !turnstileBlocked;
+  const canRefine = state !== 'loading' && Boolean(result) && !missingReminderSession && !sessionRefinementBlocked && !refinementBlocked && !hourlyBlocked && !turnstileBlocked;
   const quotaNotice = hourlyBlocked
     ? `Too many AI requests this hour. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`
     : sessionBlocked
       ? `You’ve reached today’s free beta reminder session limit. Come back after ${quota.resetAt ? new Date(quota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`
-      : refinementBlocked && result
+      : sessionRefinementBlocked && result
+        ? 'This reminder session has used its free beta adjustment. Start a new reminder session to adjust another draft.'
+        : refinementBlocked && result
         ? `You’ve reached today’s free beta adjustment limit. Come back after ${refinementQuota.resetAt ? new Date(refinementQuota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`
-        : '';
+        : missingReminderSession
+          ? 'Start a new reminder session before making adjustments.'
+          : '';
 
   return (
     <section data-clarity-mask="true" className="section grid items-start gap-6 lg:grid-cols-2 mobile-stack">
@@ -497,10 +506,10 @@ function refinementReason(mode: RefinementMode, stage: ReminderStage, original: 
 }
 function normalizeApiResult(api: GenerateApiResponse, stage: ReminderStage, reason: string, mode: RefinementMode, submittedForm: FormState): ResultSnapshot {
   if ('recommendedStage' in api) {
-    return { stage: api.recommendedStage, reason: api.stageReason, subject: api.subject, body: api.emailBody, dm: api.shortMessage, riskNotice: api.riskNotice, disclaimer: api.disclaimer, refinementMode: mode, submittedForm };
+    return { stage: api.recommendedStage, reason: api.stageReason, subject: api.subject, body: api.emailBody, dm: api.shortMessage, riskNotice: api.riskNotice, disclaimer: api.disclaimer, refinementMode: mode, submittedForm, reminderSessionId: api.meta?.reminderSessionId, reminderSession: api.meta?.reminderSession };
   }
   const selected = draftForStage(api, stage);
-  return { stage, reason, subject: selected.subject, body: selected.emailBody, dm: selected.shortMessage, riskNotice: stage === 'Final Notice' ? finalNoticeWarning : undefined, disclaimer: api.disclaimer, refinementMode: mode, submittedForm };
+  return { stage, reason, subject: selected.subject, body: selected.emailBody, dm: selected.shortMessage, riskNotice: stage === 'Final Notice' ? finalNoticeWarning : undefined, disclaimer: api.disclaimer, refinementMode: mode, submittedForm, reminderSessionId: api.meta?.reminderSessionId };
 }
 function draftForStage(api: { gentle: ApiDraft; firm: ApiDraft; finalNotice: ApiDraft }, stage: ReminderStage) {
   if (stage === 'Final Notice') return api.finalNotice;
@@ -508,6 +517,8 @@ function draftForStage(api: { gentle: ApiDraft; firm: ApiDraft; finalNotice: Api
   return api.gentle;
 }
 function messageForApiError(e: { code?: string; status?: number; message?: string; resetAt?: string }) {
+  if (e.code === 'REMINDER_SESSION_REQUIRED' || e.code === 'REMINDER_SESSION_NOT_FOUND') return 'Start a new reminder session before making adjustments.';
+  if (e.code === 'REMINDER_SESSION_REFINEMENT_LIMIT_REACHED') return 'This reminder session has already used its free beta adjustment. Start a new session or join the waitlist for higher limits.';
   if (e.code === 'QUOTA_EXCEEDED' || e.status === 402) return `You’ve reached today’s free beta limit. Come back after ${e.resetAt ? new Date(e.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
   if (e.code === 'RATE_LIMITED' || e.status === 429) return 'Too many requests. Please wait a bit and try again.';
   if (e.code === 'PROVIDER_UNAVAILABLE' || e.status === 503) return 'The generator is temporarily unavailable. Please try again in a few minutes.';
