@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "FreelancerReply Backend API",
-    "version": "2026-08-07.v1"
+    "version": "2026-08-07.v2-amended"
   },
   "servers": [
     { "url": "https://freelancer-reply-api.huangzhenhui0303.workers.dev" }
@@ -13,127 +13,56 @@
     "payment": false,
     "automaticEmailSending": false,
     "generatorInputsStoredServerSide": false,
-    "waitlistEmailStored": true
+    "waitlistEmailStored": true,
+    "aiProvider": "openrouter",
+    "aiModel": "openai/gpt-4.1-mini",
+    "outputMode": "recommended_reminder_single_draft",
+    "costTracking": true
   },
   "paths": {
-    "/api/health": {
-      "get": {
-        "summary": "Health check",
-        "x-auth": "anonymous",
-        "x-cost-impact": "none",
-        "x-rate-limit": "none",
-        "responses": { "200": { "description": "Backend status and bindings" } }
-      }
-    },
-    "/api/auth/login": {
-      "post": {
-        "summary": "Create anonymous httpOnly quota session",
-        "x-auth": "anonymous",
-        "x-cost-impact": "none",
-        "x-rate-limit": "30 per IP/day",
-        "responses": {
-          "200": { "description": "Sets fr_session cookie" },
-          "429": { "description": "RATE_LIMITED" }
-        }
-      }
-    },
-    "/api/auth/me": {
-      "get": {
-        "summary": "Read current anonymous session and P0 entitlements",
-        "x-auth": "optional",
-        "x-cost-impact": "none",
-        "responses": { "200": { "description": "Current actor, plan, entitlements" } }
-      }
-    },
-    "/api/usage": {
-      "get": {
-        "summary": "Read generation and waitlist quota",
-        "x-auth": "optional",
-        "x-cost-impact": "none",
-        "responses": { "200": { "description": "Quota counters and reset time" } }
-      }
-    },
+    "/api/health": { "get": { "summary": "Health check", "responses": { "200": { "description": "Backend status, bindings, limits" } } } },
+    "/api/auth/login": { "post": { "summary": "Create anonymous httpOnly quota session", "x-rate-limit": "30 per IP/day", "responses": { "200": { "description": "Sets fr_session cookie" }, "429": { "description": "RATE_LIMITED" } } } },
+    "/api/auth/me": { "get": { "summary": "Read current anonymous session and P0 entitlements", "responses": { "200": { "description": "Current actor, plan, entitlements" } } } },
+    "/api/usage": { "get": { "summary": "Read reminder session quota, waitlist quota, and actor AI cost summary", "responses": { "200": { "description": "usage.generatePaymentReminder quota; usage.aiCostSummary token/cost totals" } } } },
     "/api/generate-payment-reminder": {
       "post": {
-        "summary": "Generate late payment reminder drafts",
+        "summary": "Generate one situation-aware recommended late payment reminder draft",
         "x-auth": "optional anonymous session; IP fallback",
-        "x-cost-impact": "high if AI_PROVIDER_API_KEY configured; low template fallback otherwise",
-        "x-rate-limit": "3 per IP/session/day and 3 per IP/hour",
-        "x-data-stored": "usage log, quota counter, task input_hash only; raw generator input/output not stored",
+        "x-cost-impact": "high; records OpenRouter token usage and provider cost",
+        "x-rate-limit": "Anonymous P0: 2 initial reminder sessions/day; refinements tracked separately; 4 AI calls/IP/hour",
+        "x-data-stored": "usage log, quota counter, task input_hash, ai_generation_costs token/cost row; raw generator input/output not stored",
         "requestBody": {
           "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["clientName", "invoiceAmount", "daysOverdue", "projectType"],
-                "properties": {
-                  "clientName": { "type": "string", "maxLength": 80 },
-                  "invoiceAmount": { "type": "string", "maxLength": 80 },
-                  "daysOverdue": { "type": "number", "minimum": 0, "maximum": 3650 },
-                  "projectType": { "type": "string", "maxLength": 120 },
-                  "tone": { "type": "string" },
-                  "invoiceNumber": { "type": "string", "maxLength": 80 },
-                  "paymentLink": { "type": "string", "format": "uri" },
-                  "clientRelationship": { "type": "string", "maxLength": 120 },
-                  "turnstileToken": { "type": "string" }
-                }
-              }
+          "content": { "application/json": { "schema": {
+            "type": "object",
+            "required": ["clientName", "invoiceAmount", "daysOverdue", "projectType"],
+            "properties": {
+              "clientName": { "type": "string", "maxLength": 80 },
+              "invoiceAmount": { "type": "string", "maxLength": 80 },
+              "daysOverdue": { "type": "number", "minimum": -30, "maximum": 3650 },
+              "projectType": { "type": "string", "maxLength": 120 },
+              "previousRemindersSent": { "enum": ["none", "one", "two", "three_plus"] },
+              "recommendedStage": { "enum": ["Due Soon / Due Today", "Gentle Reminder", "Firm Reminder", "Final Notice"] },
+              "refinementMode": { "enum": ["initial", "softer", "firmer", "regenerate"] },
+              "stageReason": { "type": "string", "maxLength": 700 },
+              "tone": { "type": "string" },
+              "invoiceNumber": { "type": "string", "maxLength": 80 },
+              "paymentLink": { "type": "string", "format": "uri" },
+              "clientRelationship": { "type": "string", "maxLength": 120 },
+              "turnstileToken": { "type": "string" }
             }
-          }
+          } } }
         },
         "responses": {
-          "200": { "description": "gentle/firm/finalNotice drafts plus disclaimer and quota meta" },
+          "200": { "description": "{recommendedStage,stageReason,subject,emailBody,shortMessage,riskNotice?,disclaimer,meta}" },
           "400": { "description": "VALIDATION_ERROR / unsafe_input" },
           "402": { "description": "QUOTA_EXCEEDED" },
           "429": { "description": "RATE_LIMITED" },
-          "503": { "description": "PROVIDER_UNAVAILABLE when fallback disabled" }
+          "503": { "description": "PROVIDER_UNAVAILABLE" }
         }
       }
     },
-    "/api/waitlist": {
-      "post": {
-        "summary": "Submit Pro waitlist interest",
-        "x-auth": "optional",
-        "x-cost-impact": "none",
-        "x-rate-limit": "10 per IP/session/day",
-        "x-data-stored": "email, role, biggestPaymentProblem, sourcePage, featureInterest, ip_hash",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["email"],
-                "properties": {
-                  "email": { "type": "string", "format": "email" },
-                  "role": { "type": "string", "maxLength": 80 },
-                  "biggestPaymentProblem": { "type": "string", "maxLength": 500 },
-                  "sourcePage": { "type": "string", "maxLength": 160 },
-                  "featureInterest": { "type": "string", "maxLength": 120 }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Waitlist stored / updated" },
-          "400": { "description": "VALIDATION_ERROR" },
-          "429": { "description": "RATE_LIMITED" }
-        }
-      }
-    },
-    "/api/events": {
-      "post": {
-        "summary": "Optional first-party analytics event collection",
-        "x-auth": "optional",
-        "x-cost-impact": "none",
-        "x-data-stored": "event_name, page, tone, anonymous_id, ip_hash, bounded metadata",
-        "responses": {
-          "200": { "description": "Event accepted" },
-          "400": { "description": "VALIDATION_ERROR" }
-        }
-      }
-    }
+    "/api/waitlist": { "post": { "summary": "Submit Pro waitlist interest", "x-rate-limit": "10 per IP/session/day", "responses": { "200": { "description": "Waitlist stored / updated" } } } },
+    "/api/events": { "post": { "summary": "Optional first-party analytics event collection", "responses": { "200": { "description": "Event accepted" } } } }
   }
 }
