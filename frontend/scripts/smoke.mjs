@@ -44,7 +44,7 @@ function draft(stage, input) {
       source: 'template_fallback',
       quota: { used: 1, limit: 2, remaining: 1, resetAt: '' },
       reminderSessionId: currentReminderSessionId,
-      reminderSession: { id: currentReminderSessionId, refinementCount: refinementCalls, refinementLimit: 2 }
+      reminderSession: { id: currentReminderSessionId, refinementCount: refinementCalls, refinementLimit: 1 }
     }
   };
 }
@@ -225,16 +225,7 @@ try {
   await page.getByRole('button', { name: 'Generate another Firm Reminder' }).click();
   await page.getByText('Your recommended reminder is ready.').waitFor({ timeout: 5000 });
   if (generateCalls !== beforeFinalChoice + 1) throw new Error('final-choice secondary action should call generate exactly once');
-  if (await page.getByRole('button', { name: 'Make it firmer' }).isDisabled()) throw new Error('refinement buttons should remain enabled when one backend refinement remains');
-
-  await page.getByRole('button', { name: 'Make it softer' }).click();
-  await page.getByText('Make this reminder softer?').waitFor({ timeout: 5000 });
-  const beforeSecondAdjustment = generateCalls;
-  await page.getByRole('button', { name: 'Generate softer draft' }).click();
-  await page.getByText('Your recommended reminder is ready.').waitFor({ timeout: 5000 });
-  if (generateCalls !== beforeSecondAdjustment + 1) throw new Error('second refinement should call generate exactly once');
-  await page.getByRole('button', { name: 'Make it firmer' }).waitFor({ state: 'attached' });
-  if (!(await page.getByRole('button', { name: 'Make it firmer' }).isDisabled())) throw new Error('refinement buttons should be disabled after backend refinement quota is exhausted');
+  if (!(await page.getByRole('button', { name: 'Make it firmer' }).isDisabled())) throw new Error('refinement buttons should be disabled after one per-session backend refinement');
 
   if (errors.length) throw new Error(`Console/page errors: ${errors.join('\n')}`);
   console.log(JSON.stringify({ ok: true, base, routes: routes.length, widths, consoleErrors: errors }, null, 2));

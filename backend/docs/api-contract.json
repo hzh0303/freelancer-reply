@@ -49,14 +49,15 @@
               "invoiceNumber": { "type": "string", "maxLength": 80 },
               "paymentLink": { "type": "string", "format": "uri" },
               "clientRelationship": { "type": "string", "maxLength": 120 },
-              "turnstileToken": { "type": "string" }
+              "turnstileToken": { "type": "string" },
+              "reminderSessionId": { "type": "string", "description": "Required for refinementMode softer/firmer/regenerate. Returned in meta.reminderSessionId after initial generation." }
             }
           } } }
         },
         "responses": {
-          "200": { "description": "{recommendedStage,stageReason,subject,emailBody,shortMessage,riskNotice?,disclaimer,meta}" },
-          "400": { "description": "VALIDATION_ERROR / unsafe_input" },
-          "402": { "description": "QUOTA_EXCEEDED" },
+          "200": { "description": "{recommendedStage,stageReason,subject,emailBody,shortMessage,riskNotice?,disclaimer,meta:{reminderSessionId,reminderSession}}" },
+          "400": { "description": "VALIDATION_ERROR / unsafe_input / REMINDER_SESSION_REQUIRED" },
+          "402": { "description": "QUOTA_EXCEEDED / REMINDER_SESSION_REFINEMENT_LIMIT_REACHED" },
           "429": { "description": "RATE_LIMITED" },
           "503": { "description": "PROVIDER_UNAVAILABLE" }
         }

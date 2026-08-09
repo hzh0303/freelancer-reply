@@ -509,7 +509,7 @@ function normalizeApiResult(api: GenerateApiResponse, stage: ReminderStage, reas
     return { stage: api.recommendedStage, reason: api.stageReason, subject: api.subject, body: api.emailBody, dm: api.shortMessage, riskNotice: api.riskNotice, disclaimer: api.disclaimer, refinementMode: mode, submittedForm, reminderSessionId: api.meta?.reminderSessionId, reminderSession: api.meta?.reminderSession };
   }
   const selected = draftForStage(api, stage);
-  return { stage, reason, subject: selected.subject, body: selected.emailBody, dm: selected.shortMessage, riskNotice: stage === 'Final Notice' ? finalNoticeWarning : undefined, disclaimer: api.disclaimer, refinementMode: mode, submittedForm, reminderSessionId: api.meta?.reminderSessionId };
+  return { stage, reason, subject: selected.subject, body: selected.emailBody, dm: selected.shortMessage, riskNotice: stage === 'Final Notice' ? finalNoticeWarning : undefined, disclaimer: api.disclaimer, refinementMode: mode, submittedForm, reminderSessionId: api.meta?.reminderSessionId, reminderSession: api.meta?.reminderSession };
 }
 function draftForStage(api: { gentle: ApiDraft; firm: ApiDraft; finalNotice: ApiDraft }, stage: ReminderStage) {
   if (stage === 'Final Notice') return api.finalNotice;

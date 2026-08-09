@@ -52,6 +52,7 @@ type GenerateInput = {
   paymentLink?: string;
   clientRelationship?: string;
   turnstileToken?: string;
+  reminderSessionId?: string;
 };
 
 type NormalizedGenerateInput = {
@@ -67,6 +68,7 @@ type NormalizedGenerateInput = {
   invoiceNumber: string | null;
   paymentLink: string | null;
   clientRelationship: string | null;
+  reminderSessionId: string | null;
 };
 
 type ReminderDraft = { subject: string; emailBody: string; shortMessage: string };
@@ -84,6 +86,8 @@ type RecommendedReminderResponse = ReminderDraft & {
     quota: { used: number; limit: number; remaining: number; resetAt: string };
     inputStored: false;
     refinementMode: RefinementMode;
+    reminderSessionId?: string;
+    reminderSession?: { id: string; refinementCount: number; refinementLimit: number };
   };
 };
 
@@ -107,6 +111,12 @@ type AiGenerationResult = {
   draft: Omit<RecommendedReminderResponse, 'meta'>;
   usage: AiUsage;
 };
+
+type ReminderSessionView = { id: string; refinementCount: number; refinementLimit: number };
+
+type ReminderSessionConsumeResult =
+  | { allowed: true; session: ReminderSessionView }
+  | { allowed: false; code: string; message: string; status: number; extra?: Record<string, unknown> };
 
 const API_VERSION = '2026-08-07.v2-amended';
 const SESSION_COOKIE = 'fr_session';
@@ -285,6 +295,11 @@ async function handleGenerate(request: Request, env: Env, ctx: ExecutionContext)
     return errorJson('VALIDATION_ERROR', validation.error || 'Invalid request.', 400, request, env);
   }
 
+  const safeInput = normalizeGenerateInput(body);
+  if (safeInput.refinementMode !== 'initial' && !safeInput.reminderSessionId) {
+    return errorJson('REMINDER_SESSION_REQUIRED', 'reminderSessionId is required for refinements.', 400, request, env);
+  }
+
   if (env.TURNSTILE_SECRET_KEY) {
     if (!body.turnstileToken) return errorJson('TURNSTILE_FAILED', 'Bot protection token is required.', 403, request, env);
     const turnstile = await verifyTurnstile(body.turnstileToken, getClientIp(request), env);
@@ -295,8 +310,16 @@ async function handleGenerate(request: Request, env: Env, ctx: ExecutionContext)
   const ipHourly = await consumeQuota(env, ipActor, `${ACTION_GENERATE}:hourly`, 1, request, 'hourly');
   if (!ipHourly.allowed) return errorJson('RATE_LIMITED', 'Too many generation requests this hour.', 429, request, env, { resetAt: ipHourly.resetAt });
 
-  const safeInput = normalizeGenerateInput(body);
   const quotaAction = safeInput.refinementMode === 'initial' ? ACTION_GENERATE : ACTION_REFINE;
+  let reminderSession: { id: string; refinementCount: number; refinementLimit: number } | undefined;
+  if (safeInput.refinementMode !== 'initial') {
+    const sessionQuota = await consumeReminderSessionRefinement(env, actor, safeInput.reminderSessionId!, request);
+    if (sessionQuota.allowed === false) {
+      return errorJson(sessionQuota.code, sessionQuota.message, sessionQuota.status, request, env, sessionQuota.extra || {});
+    }
+    reminderSession = sessionQuota.session;
+  }
+
   const quota = await consumeQuota(env, actor, quotaAction, 1, request, 'daily');
   if (!quota.allowed) {
     const message = quotaAction === ACTION_GENERATE ? 'Free beta daily reminder session quota reached.' : 'Free beta daily refinement quota reached.';
@@ -331,10 +354,14 @@ async function handleGenerate(request: Request, env: Env, ctx: ExecutionContext)
   if (aiUsage) ctx.waitUntil(logAiGenerationCost(env, actor, request, taskId, aiUsage, 'success'));
   if (env.TASK_QUEUE) ctx.waitUntil(env.TASK_QUEUE.send({ type: 'generation_completed', taskId, source, stage: draft.recommendedStage, refinementMode: safeInput.refinementMode, at: new Date().toISOString() }).catch((err) => console.warn('queue_send_failed', safeError(err))));
 
+  if (safeInput.refinementMode === 'initial') {
+    reminderSession = await createReminderSession(env, actor, request, taskId, inputHash, draft.recommendedStage);
+  }
+
   const latest = await readOrCreateQuota(env, actor, ACTION_GENERATE, 'daily');
   const response: RecommendedReminderResponse = {
     ...draft,
-    meta: { source, provider: aiUsage?.provider || providerName(env), model: aiUsage?.actualModel || env.AI_MODEL, usage: aiUsage, quota: quotaView(latest), inputStored: false, refinementMode: safeInput.refinementMode }
+    meta: { source, provider: aiUsage?.provider || providerName(env), model: aiUsage?.actualModel || env.AI_MODEL, usage: aiUsage, quota: quotaView(latest), inputStored: false, refinementMode: safeInput.refinementMode, reminderSessionId: reminderSession?.id, reminderSession }
   };
   return json(response, 200, request, env);
 }
@@ -421,6 +448,51 @@ async function consumeQuota(env: Env, actor: Actor, action: string, units: numbe
     return { allowed: false, remaining: Math.max(0, latest.quota_limit - latest.used), resetAt: latest.reset_at };
   }
   return { allowed: true, remaining: Math.max(0, quota.quota_limit - quota.used - units), resetAt: quota.reset_at };
+}
+
+async function createReminderSession(env: Env, actor: Actor, request: Request, taskId: string, inputHash: string, recommendedStage: ReminderStage): Promise<ReminderSessionView> {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const ipHash = await hashIp(getClientIp(request), env.SESSION_SECRET);
+  const refinementLimit = reminderLimits(env).anonymousRefinementsPerSession;
+  await env.DB.prepare(`INSERT INTO reminder_sessions (id, user_id, anon_id, ip_hash, initial_task_id, recommended_stage, input_hash, refinement_count, refinement_limit, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`).bind(
+    id,
+    actor.userId || null,
+    actor.actorType === 'anonymous' ? actor.actorId : null,
+    ipHash,
+    taskId,
+    recommendedStage,
+    inputHash,
+    refinementLimit,
+    now,
+    now
+  ).run();
+  return { id, refinementCount: 0, refinementLimit };
+}
+
+async function consumeReminderSessionRefinement(env: Env, actor: Actor, reminderSessionId: string, request: Request): Promise<ReminderSessionConsumeResult> {
+  const row = await env.DB.prepare(`SELECT id, user_id, anon_id, refinement_count, refinement_limit FROM reminder_sessions WHERE id = ?`).bind(reminderSessionId).first<any>();
+  const owned = row && (actor.userId ? row.user_id === actor.userId : row.anon_id === actor.actorId);
+  if (!owned) {
+    await logUsage(env, actor, request, ACTION_REFINE, 0, 'rejected_reminder_session_not_found', { reminderSessionId });
+    return { allowed: false, code: 'REMINDER_SESSION_NOT_FOUND', message: 'Reminder session was not found for this actor.', status: 404 };
+  }
+
+  const now = new Date().toISOString();
+  const updated = await env.DB.prepare(`UPDATE reminder_sessions SET refinement_count = refinement_count + 1, updated_at = ? WHERE id = ? AND refinement_count < refinement_limit`).bind(now, reminderSessionId).run();
+  if (!updated.meta || updated.meta.changes !== 1) {
+    await logUsage(env, actor, request, ACTION_REFINE, 0, 'rejected_reminder_session_refinement_limit', { reminderSessionId });
+    return {
+      allowed: false,
+      code: 'REMINDER_SESSION_REFINEMENT_LIMIT_REACHED',
+      message: 'This reminder session has already used its free beta refinement.',
+      status: 402,
+      extra: { reminderSession: { id: row.id, refinementCount: Number(row.refinement_count || 0), refinementLimit: Number(row.refinement_limit || 0) } }
+    };
+  }
+
+  const latest = await env.DB.prepare(`SELECT id, refinement_count, refinement_limit FROM reminder_sessions WHERE id = ?`).bind(reminderSessionId).first<any>();
+  return { allowed: true, session: { id: latest.id, refinementCount: Number(latest.refinement_count || 0), refinementLimit: Number(latest.refinement_limit || 0) } };
 }
 
 async function logUsage(env: Env, actor: Actor, request: Request, action: string, units: number, status: string, metadata: Record<string, unknown> = {}, aiUsage?: AiUsage) {
@@ -513,6 +585,7 @@ function validateGenerateInput(input: GenerateInput | null | undefined): { ok: b
   if (input.previousRemindersSent && !['none', 'one', 'two', 'three_plus'].includes(input.previousRemindersSent)) return { ok: false, error: 'previousRemindersSent is invalid.' };
   if (input.recommendedStage && !STAGES.includes(input.recommendedStage)) return { ok: false, error: 'recommendedStage is invalid.' };
   if (input.refinementMode && !['initial', 'softer', 'firmer', 'regenerate'].includes(input.refinementMode)) return { ok: false, error: 'refinementMode is invalid.' };
+  if (input.reminderSessionId && !/^[a-f0-9-]{36}$/i.test(String(input.reminderSessionId))) return { ok: false, error: 'reminderSessionId is invalid.' };
   if (String(input.clientName).length > 80) return { ok: false, error: 'clientName is too long.' };
   if (String(input.projectType).length > 120) return { ok: false, error: 'projectType is too long.' };
   if (input.paymentLink && !/^https?:\/\/[^\s]+$/i.test(String(input.paymentLink))) return { ok: false, error: 'paymentLink must be a valid URL.' };
@@ -532,7 +605,8 @@ function normalizeGenerateInput(input: GenerateInput): NormalizedGenerateInput {
     tone: trimOptional(input.tone, 40),
     invoiceNumber: trimOptional(input.invoiceNumber, 80),
     paymentLink: trimOptional(input.paymentLink, 240),
-    clientRelationship: trimOptional(input.clientRelationship, 120)
+    clientRelationship: trimOptional(input.clientRelationship, 120),
+    reminderSessionId: trimOptional(input.reminderSessionId, 36)
   };
   const recommendation = recommendStage(base.daysOverdue, base.previousRemindersSent, base.clientRelationship);
   const recommendedStage = input.recommendedStage && STAGES.includes(input.recommendedStage) ? input.recommendedStage : recommendation.recommendedStage;
