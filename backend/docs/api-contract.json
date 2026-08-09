@@ -27,9 +27,9 @@
     "/api/generate-payment-reminder": {
       "post": {
         "summary": "Generate one situation-aware recommended late payment reminder draft",
-        "x-auth": "optional anonymous session; IP fallback",
+        "x-auth": "optional anonymous session; IP fallback; Turnstile token required when TURNSTILE_SECRET_KEY is configured",
         "x-cost-impact": "high; records OpenRouter token usage and provider cost",
-        "x-rate-limit": "Anonymous P0: 2 initial reminder sessions/day; refinements tracked separately; 4 AI calls/IP/hour",
+        "x-rate-limit": "Anonymous P0: 2 initial reminder sessions/day; refinements tracked separately; 4 AI calls/IP/hour; Turnstile required before provider call",
         "x-data-stored": "usage log, quota counter, task input_hash, ai_generation_costs token/cost row; raw generator input/output not stored",
         "requestBody": {
           "required": true,
