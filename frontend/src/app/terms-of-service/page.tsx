@@ -65,13 +65,7 @@ export default function Terms() {
             ]
           },
           {
-            title: '8. Free beta limits',
-            body: [
-              'Free beta usage is limited. Current free beta limits may include a limited number of reminder sessions per day and a limited number of adjustments per reminder session, and protected draft requests may also be subject to hourly abuse-prevention limits. Limits may change during beta.'
-            ]
-          },
-          {
-            title: '9. Contact',
+            title: '8. Contact',
             body: [`Contact: ${site.contactEmail}. Website: ${site.url}.`]
           }
         ]}
