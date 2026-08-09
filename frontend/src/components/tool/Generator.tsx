@@ -39,6 +39,16 @@ type ResultSnapshot = {
 };
 
 type Recommendation = { stage: ReminderStage; reason: string; riskNotice?: string };
+type PendingAction = {
+  title: string;
+  body: string;
+  primaryLabel: string;
+  primaryMode: RefinementMode;
+  primaryStage: ReminderStage;
+  secondaryLabel?: string;
+  secondaryMode?: RefinementMode;
+  secondaryStage?: ReminderStage;
+};
 const fallbackQuota: Quota = { used: 0, limit: 2, remaining: 2, resetAt: '' };
 const reminderOptions: { label: string; value: PreviousReminders }[] = [
   { label: 'None', value: 'none' },
@@ -80,7 +90,8 @@ export function Generator() {
   const [result, setResult] = useState<ResultSnapshot | null>(null);
   const [quota, setQuota] = useState<Quota>(fallbackQuota);
   const [apiSource, setApiSource] = useState<'ai_provider' | 'template_fallback' | 'frontend_fallback' | null>(null);
-  const [confirmFinal, setConfirmFinal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [localRefinements, setLocalRefinements] = useState(0);
 
   useEffect(() => {
     setForm((f) => ({
@@ -113,8 +124,15 @@ export function Generator() {
   const recommendation = useMemo(() => recommendStage(form), [form]);
 
   async function generate(mode: RefinementMode = 'initial', overrideStage?: ReminderStage) {
+    if (state === 'loading') return;
+    const limitMessage = preflightLimitMessage(mode);
+    if (limitMessage) {
+      setErrorMessage(limitMessage);
+      track('error_shown', { type: mode === 'initial' ? 'session_quota_preflight' : 'refinement_quota_preflight' });
+      return;
+    }
     if (!form.clientName || !form.amount || !form.days || !form.project) {
-      setState('error');
+      setState(result ? 'success' : 'error');
       setErrorMessage('Please complete client name, invoice amount, days overdue, project or service, and previous reminders.');
       track('error_shown', { type: 'validation' });
       return;
@@ -122,6 +140,7 @@ export function Generator() {
     const stage = overrideStage || recommendation.stage;
     const reason = stage === recommendation.stage ? recommendation.reason : refinementReason(mode, stage, recommendation.stage);
     const submitted = { ...form };
+    setPendingAction(null);
     setState('loading');
     setErrorMessage('');
     track(mode === 'regenerate' ? 'regenerate_clicked' : mode === 'softer' ? 'make_softer_clicked' : mode === 'firmer' ? 'make_firmer_clicked' : 'generator_started', { stage });
@@ -144,13 +163,14 @@ export function Generator() {
       setResult(normalized);
       setQuota(apiResult.meta?.quota || quota);
       setApiSource(apiResult.meta?.source || null);
+      setLocalRefinements(mode === 'initial' ? 0 : (count) => count + 1);
       setState('success');
       track('stage_recommended', { stage: normalized.stage, mode });
       track('generator_completed', { stage: normalized.stage, source: apiResult.meta?.source || 'unknown', mode });
       if (normalized.stage === 'Final Notice') track('final_notice_warning_shown', { mode });
     } catch (error) {
       const e = error as Error & { code?: string; status?: number; resetAt?: string };
-      setState('error');
+      setState(result ? 'success' : 'error');
       setErrorMessage(messageForApiError(e));
       track('error_shown', { type: e.code || e.status || 'api_error' });
     }
@@ -168,23 +188,75 @@ export function Generator() {
     setTimeout(() => setToast(''), 2200);
   }
 
+  function preflightLimitMessage(mode: RefinementMode) {
+    if (mode === 'initial') {
+      if (quota.limit > 0 && quota.remaining <= 0) return `You’ve reached today’s free beta reminder session limit. Come back after ${quota.resetAt ? new Date(quota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
+      return '';
+    }
+    if (localRefinements >= 1) return 'Free beta includes one follow-up adjustment after each generated reminder. Start over for a new reminder session, or come back after the daily reset for more refinements.';
+    return '';
+  }
+  function openPendingAction(action: PendingAction) {
+    if (!result || state === 'loading') return;
+    const limitMessage = preflightLimitMessage(action.primaryMode);
+    if (limitMessage) {
+      setErrorMessage(limitMessage);
+      track('error_shown', { type: 'refinement_quota_preflight' });
+      return;
+    }
+    setErrorMessage('');
+    setPendingAction(action);
+  }
   function softer() {
     if (!result || state === 'loading') return;
-    generate('softer', adjacentStage(result.stage, -1));
+    const next = adjacentStage(result.stage, -1);
+    openPendingAction({
+      title: 'Make this reminder softer?',
+      body: 'This uses one free beta adjustment. The payment ask will stay clear, but the wording will become more gentle.',
+      primaryLabel: 'Generate softer draft',
+      primaryMode: 'softer',
+      primaryStage: next
+    });
   }
   function firmer() {
     if (!result || state === 'loading') return;
     const next = adjacentStage(result.stage, 1);
     if (result.stage === 'Firm Reminder' && next === 'Final Notice') {
-      setConfirmFinal(true);
+      openPendingAction({
+        title: 'Move toward a Final Notice?',
+        body: 'Final Notice wording can have legal or business consequences. You can generate a Final Notice draft, generate another Firm Reminder, or close this dialog without spending an adjustment.',
+        primaryLabel: 'Generate Final Notice draft',
+        primaryMode: 'firmer',
+        primaryStage: 'Final Notice',
+        secondaryLabel: 'Generate another Firm Reminder',
+        secondaryMode: 'regenerate',
+        secondaryStage: 'Firm Reminder'
+      });
       return;
     }
-    generate('firmer', next);
+    openPendingAction({
+      title: 'Make this reminder firmer?',
+      body: 'This uses one free beta adjustment. The draft will become more direct while staying professional and avoiding unsupported legal threats.',
+      primaryLabel: 'Generate firmer draft',
+      primaryMode: 'firmer',
+      primaryStage: next
+    });
+  }
+  function regenerate() {
+    if (!result || state === 'loading') return;
+    openPendingAction({
+      title: 'Regenerate this reminder?',
+      body: 'This uses one free beta adjustment and keeps the same recommended stage and situation.',
+      primaryLabel: 'Regenerate draft',
+      primaryMode: 'regenerate',
+      primaryStage: result.stage
+    });
   }
   function startOver() {
     setResult(null);
     setState('empty');
     setErrorMessage('');
+    setLocalRefinements(0);
   }
 
   return (
@@ -225,7 +297,7 @@ export function Generator() {
             <Input label="Invoice number" value={form.invoiceNumber} onChange={(v) => setForm({ ...form, invoiceNumber: v })} helper="Optional. Only include it if you want it in the draft." />
             <Input label="Payment link" value={form.paymentLink} onChange={(v) => setForm({ ...form, paymentLink: v })} helper="Included as text only; not opened, verified, or processed." />
           </> : null}
-          <button className="btn btn-primary sm:col-span-2" onClick={() => generate('initial')} disabled={state === 'loading'}>{state === 'loading' ? 'Reviewing the situation…' : 'Get recommended reminder'}</button>
+          <button className="btn btn-primary sm:col-span-2" onClick={() => generate('initial')} disabled={state === 'loading' || (quota.limit > 0 && quota.remaining <= 0)}>{state === 'loading' ? <span className="inline-flex items-center gap-2"><Spinner /> Generating…</span> : 'Get recommended reminder'}</button>
           <p className="sm:col-span-2 text-xs muted">By generating a draft, you understand that FreelancerReply creates AI-assisted drafts only. It does not provide legal, financial, accounting, or debt collection advice.</p>
         </div>
       </div>
@@ -233,17 +305,17 @@ export function Generator() {
         <div className="border-b border-[var(--border)] bg-white p-6">
           <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your recommended reminder is ready.' : state === 'loading' ? 'Reviewing the situation…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2 text-xs font-bold">{quota.remaining} of {quota.limit} free sessions left today</span></div>
           {apiSource ? <p className="mt-2 text-xs muted">Generation mode: {apiSource === 'template_fallback' ? 'Template fallback' : apiSource === 'ai_provider' ? 'Live AI generation' : 'Backend unavailable'}</p> : null}
-          {state === 'error' ? <p className="mt-3 text-sm text-red-700">{errorMessage}</p> : <p className="mt-3 text-sm muted">Describe the payment situation to get one recommended reminder stage and draft. Nothing is sent automatically.</p>}
+          {errorMessage ? <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{errorMessage}</p> : <p className="mt-3 text-sm muted">Describe the payment situation to get one recommended reminder stage and draft. Nothing is sent automatically.</p>}
         </div>
         <div className="p-6">
-          {state === 'loading' ? <div className="rounded-xl bg-[var(--paper)] p-8 text-center muted">Recommending a stage and drafting your reminder. Please do not refresh.</div> : result ? <Result result={result} copy={copy} /> : <EmptyResult />}
+          {state === 'loading' ? <LoadingResult /> : result ? <Result result={result} copy={copy} /> : <EmptyResult />}
           <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4 text-xs muted">AI-generated drafts may not fit your specific contract, client relationship, or local rules. This is not legal, financial, accounting, or debt collection advice. Review and edit before sending. Mention late fees, suspension, collections, or legal action only if you have verified that you are allowed to do so.</div>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={softer} disabled={state === 'loading' || !result}>Make it softer</button><button className="btn btn-secondary" onClick={firmer} disabled={state === 'loading' || !result}>Make it firmer</button><button className="btn btn-secondary" onClick={() => result ? generate('regenerate', result.stage) : undefined} disabled={state === 'loading' || !result}>Regenerate</button><button className="btn btn-primary" onClick={() => result ? copy(`${result.subject}\n\n${result.body}`, 'email') : undefined} disabled={!result}>Copy email</button></div>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={softer} disabled={state === 'loading' || !result || localRefinements >= 1}>Make it softer</button><button className="btn btn-secondary" onClick={firmer} disabled={state === 'loading' || !result || localRefinements >= 1}>Make it firmer</button><button className="btn btn-secondary" onClick={regenerate} disabled={state === 'loading' || !result || localRefinements >= 1}>Regenerate</button><button className="btn btn-primary" onClick={() => result ? copy(`${result.subject}\n\n${result.body}`, 'email') : undefined} disabled={!result || state === 'loading'}>Copy email</button></div>
           <div className="mt-5 grid gap-2 sm:grid-cols-4"><Gate label="Generate full sequence" open={() => openGate('full_sequence')} /><Gate label="Save this client" open={() => openGate('save_client')} /><Gate label="Save to history" open={() => openGate('history')} /><Gate label="Use my brand voice" open={() => openGate('brand_voice')} /></div>
           <button className="mt-4 text-sm font-semibold text-[var(--primary)]" type="button" onClick={startOver}>Start over</button>
         </div>
       </div>
-      {confirmFinal ? <ConfirmFinal close={() => setConfirmFinal(false)} confirm={() => { setConfirmFinal(false); generate('firmer', 'Final Notice'); }} /> : null}
+      {pendingAction ? <ConfirmAction action={pendingAction} close={() => setPendingAction(null)} run={(mode, stage) => generate(mode, stage)} loading={state === 'loading'} /> : null}
       {toast ? <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[var(--ink)] px-4 py-2 text-sm text-white">{toast}</div> : null}
       {waitlist.open ? <Waitlist feature={waitlist.feature} close={() => setWaitlist({ open: false })} /> : null}
     </section>
@@ -271,8 +343,14 @@ function Block({ title, text, onCopy }: { title: string; text: string; onCopy: (
 function Gate({ label, open }: { label: string; open: () => void }) {
   return <button className="rounded-xl border border-[var(--border)] bg-white p-3 text-sm font-semibold" onClick={open}>{label}</button>;
 }
-function ConfirmFinal({ close, confirm }: { close: () => void; confirm: () => void }) {
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"><div className="paper-card max-w-lg p-6"><h2 className="font-display text-3xl">Do you want to move toward a Final Notice?</h2><p className="mt-3 muted">Final Notice wording can have legal or business consequences. Continue only if you have already followed up and believe a more formal message is appropriate.</p><div className="mt-5 flex gap-2"><button className="btn btn-primary" onClick={confirm}>Continue to Final Notice draft</button><button className="btn btn-secondary" onClick={close}>Keep it firm instead</button></div></div></div>;
+function Spinner() {
+  return <span aria-hidden className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />;
+}
+function LoadingResult() {
+  return <div role="status" className="rounded-xl bg-[var(--paper)] p-8 text-center muted"><div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]"><Spinner /></div><p className="font-semibold text-[var(--ink)]">Generating your reminder…</p><p className="mt-2 text-sm">Recommending a stage and drafting your message. Please do not refresh or click again.</p></div>;
+}
+function ConfirmAction({ action, close, run, loading }: { action: PendingAction; close: () => void; run: (mode: RefinementMode, stage: ReminderStage) => void; loading: boolean }) {
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"><div className="paper-card relative max-w-lg p-6"><button aria-label="Close dialog" className="absolute right-4 top-4 text-2xl leading-none muted hover:text-[var(--ink)]" onClick={close} disabled={loading}>×</button><h2 className="font-display pr-8 text-3xl">{action.title}</h2><p className="mt-3 muted">{action.body}</p><div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-primary" onClick={() => run(action.primaryMode, action.primaryStage)} disabled={loading}>{loading ? <span className="inline-flex items-center gap-2"><Spinner /> Generating…</span> : action.primaryLabel}</button>{action.secondaryLabel && action.secondaryMode && action.secondaryStage ? <button className="btn btn-secondary" onClick={() => run(action.secondaryMode!, action.secondaryStage!)} disabled={loading}>{action.secondaryLabel}</button> : null}</div></div></div>;
 }
 function Waitlist({ close, feature }: { close: () => void; feature?: string }) {
   const [email, setEmail] = useState('');

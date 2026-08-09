@@ -13,6 +13,7 @@ const routes = [
 ];
 const widths = [320, 375, 390, 768, 1024];
 const errors = [];
+let generateCalls = 0;
 
 function countPrevious(value) {
   return value === 'none' ? 0 : value === 'one' ? 1 : value === 'two' ? 2 : 3;
@@ -61,6 +62,7 @@ async function installApiMocks(page) {
     })
   );
   await page.route('**/api/generate-payment-reminder', async (route) => {
+    generateCalls += 1;
     const input = route.request().postDataJSON();
     const stage = input.recommendedStage || recommend(input.daysOverdue, input.previousRemindersSent);
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(draft(stage, input)) });
@@ -175,9 +177,25 @@ try {
   await page.getByRole('button', { name: 'None', exact: true }).click();
   await page.getByRole('button', { name: 'Get recommended reminder' }).click();
   await page.getByText('Your recommended reminder is ready.').waitFor({ timeout: 5000 });
+
+  const beforeDialogCancel = generateCalls;
+  await page.getByRole('button', { name: 'Make it softer' }).click();
+  await page.getByText('Make this reminder softer?').waitFor({ timeout: 5000 });
+  await page.getByRole('button', { name: 'Close dialog' }).click();
+  if (generateCalls !== beforeDialogCancel) throw new Error('closing softer confirmation should not call generate');
+
+  await page.getByRole('button', { name: 'Regenerate' }).click();
+  await page.getByText('Regenerate this reminder?').waitFor({ timeout: 5000 });
+  await page.getByRole('button', { name: 'Close dialog' }).click();
+
   await page.getByRole('button', { name: 'Make it firmer' }).click();
-  await page.getByText('Do you want to move toward a Final Notice?').waitFor({ timeout: 5000 });
-  await page.getByRole('button', { name: 'Keep it firm instead' }).click();
+  await page.getByText('Move toward a Final Notice?').waitFor({ timeout: 5000 });
+  const beforeFinalChoice = generateCalls;
+  await page.getByRole('button', { name: 'Generate another Firm Reminder' }).click();
+  await page.getByText('Your recommended reminder is ready.').waitFor({ timeout: 5000 });
+  if (generateCalls !== beforeFinalChoice + 1) throw new Error('final-choice secondary action should call generate exactly once');
+  await page.getByRole('button', { name: 'Make it firmer' }).waitFor({ state: 'attached' });
+  if (!(await page.getByRole('button', { name: 'Make it firmer' }).isDisabled())) throw new Error('refinement buttons should be disabled after one adjustment');
 
   if (errors.length) throw new Error(`Console/page errors: ${errors.join('\n')}`);
   console.log(JSON.stringify({ ok: true, base, routes: routes.length, widths, consoleErrors: errors }, null, 2));
