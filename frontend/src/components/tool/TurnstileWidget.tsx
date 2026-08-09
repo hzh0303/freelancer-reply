@@ -104,9 +104,22 @@ export function TurnstileWidget({ siteKey, resetKey, onTokenChange, onStatusChan
   }
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-white p-3">
-      <div ref={containerRef} className="min-h-[65px] w-full" data-testid="turnstile-widget" />
-      <p className="mt-2 text-xs muted">Security check helps protect the free AI generator from automated abuse.</p>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--primary-soft)]/70 p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/75 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[var(--primary)]">
+            <span aria-hidden className="grid h-5 w-5 place-items-center rounded-full bg-[var(--primary)] text-[10px] text-white">✓</span>
+            Security check
+          </div>
+          <p className="mt-2 text-sm font-semibold text-[var(--ink)]">Keep the free generator available.</p>
+          <p className="mt-1 text-xs muted">A quick verification helps prevent automated abuse before creating drafts.</p>
+        </div>
+        <div className="flex justify-start sm:justify-end">
+          <div className="overflow-hidden rounded-xl bg-white p-1 shadow-sm">
+            <div ref={containerRef} className="min-h-[65px] w-[150px]" data-testid="turnstile-widget" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

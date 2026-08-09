@@ -362,7 +362,7 @@ export function Generator() {
           </> : null}
           <div className="sm:col-span-2">
             <TurnstileWidget siteKey={turnstileSiteKey} resetKey={turnstileResetKey} onTokenChange={handleTurnstileToken} onStatusChange={handleTurnstileStatus} />
-            {turnstileSiteKey && turnstileBlocked ? <p className="mt-2 text-xs muted">Complete the security check to enable AI generation.</p> : null}
+            {turnstileSiteKey && turnstileBlocked ? <p className="mt-2 text-xs muted">Complete the security check to enable draft generation.</p> : null}
             {turnstileStatus === 'error' ? <p role="alert" className="mt-2 text-sm text-red-700">Security verification could not load. Refresh the page and try again.</p> : null}
             {turnstileStatus === 'expired' ? <p role="alert" className="mt-2 text-sm text-red-700">Security verification expired. Complete the check again before generating.</p> : null}
           </div>
