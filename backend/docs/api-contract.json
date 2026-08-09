@@ -23,7 +23,7 @@
     "/api/health": { "get": { "summary": "Health check", "responses": { "200": { "description": "Backend status, bindings, limits" } } } },
     "/api/auth/login": { "post": { "summary": "Create anonymous httpOnly quota session", "x-rate-limit": "30 per IP/day", "responses": { "200": { "description": "Sets fr_session cookie" }, "429": { "description": "RATE_LIMITED" } } } },
     "/api/auth/me": { "get": { "summary": "Read current anonymous session and P0 entitlements", "responses": { "200": { "description": "Current actor, plan, entitlements" } } } },
-    "/api/usage": { "get": { "summary": "Read reminder session quota, waitlist quota, and actor AI cost summary", "responses": { "200": { "description": "usage.generatePaymentReminder quota; usage.aiCostSummary token/cost totals" } } } },
+    "/api/usage": { "get": { "summary": "Read reminder session quota, refinement quota, hourly AI rate-limit bucket, waitlist quota, and actor AI cost summary", "responses": { "200": { "description": "usage.generatePaymentReminder, usage.refinePaymentReminder, usage.hourlyAiCalls, usage.waitlistSubmit, usage.aiCostSummary. hourlyAiCalls is IP-scoped for frontend preflight; backend still enforces it on request." } } } },
     "/api/generate-payment-reminder": {
       "post": {
         "summary": "Generate one situation-aware recommended late payment reminder draft",

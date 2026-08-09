@@ -235,7 +235,10 @@ async function handleMe(request: Request, env: Env) {
 
 async function handleUsage(request: Request, env: Env) {
   const actor = await getActor(request, env);
+  const ipActor = await getIpActor(request, env);
   const generateQuota = await readOrCreateQuota(env, actor, ACTION_GENERATE, 'daily');
+  const refineQuota = await readOrCreateQuota(env, actor, ACTION_REFINE, 'daily');
+  const hourlyAiQuota = await readOrCreateQuota(env, ipActor, `${ACTION_GENERATE}:hourly`, 'hourly');
   const waitlistQuota = await readOrCreateQuota(env, actor, ACTION_WAITLIST, 'daily');
   const aiCostSummary = await readAiCostSummary(env, actor);
   const limits = reminderLimits(env);
@@ -244,6 +247,8 @@ async function handleUsage(request: Request, env: Env) {
     actor: { type: actor.actorType, authenticated: Boolean(actor.userId), emailVerified: false },
     usage: {
       generatePaymentReminder: quotaView(generateQuota),
+      refinePaymentReminder: quotaView(refineQuota),
+      hourlyAiCalls: quotaView(hourlyAiQuota),
       waitlistSubmit: quotaView(waitlistQuota),
       aiCostSummary
     },
@@ -263,6 +268,7 @@ async function handleUsage(request: Request, env: Env) {
     },
     notes: [
       'P0 amended quota is session-oriented: anonymous free allows 2 reminder sessions/day with 1 refinement/session by default.',
+      'usage.hourlyAiCalls is IP-scoped and lets the frontend preflight the hourly AI rate limit, but the backend still enforces it on every request.',
       'Current backend stores AI call cost and token data, but does not persist raw generator input or generated output.',
       'Email-verified higher quota is a documented P0/P1 direction but email verification is not implemented yet.'
     ]
