@@ -1,9 +1,35 @@
-export const example = {clientName:'Sarah', amount:'$850', daysOverdue:12, projectType:'Website redesign', tone:'Professional', subject:'Follow-up on overdue website redesign invoice', body:`Hi Sarah,
+export const example = {
+  clientName: 'Sarah',
+  amount: '$850',
+  daysOverdue: 12,
+  projectType: 'Website redesign',
+  previousReminders: 'None',
+  clientRelationship: 'Repeat client',
+  recommendedStage: 'Firm Reminder',
+  stageReason: 'The invoice is 12 days overdue, but this appears to be your first reminder. A firm reminder is clearer than a gentle nudge, but safer than starting with a final notice.',
+  subject: 'Follow-up on website redesign invoice',
+  body: `Hi Sarah,
 
 I hope you’re doing well. I wanted to follow up on the $850 invoice for the website redesign project, which is now 12 days overdue.
 
 Could you please let me know when I can expect payment, or if there is anything you need from me to process it?
 
 Thanks,
-[Your Name]`, dm:'Hi Sarah — just following up on the $850 website redesign invoice, which is now 12 days overdue. Could you let me know when I can expect payment?'};
-export const faqs = [ ['Is FreelancerReply free?','Yes. FreelancerReply is free while in beta. The free beta allows up to 3 generations per day. Each generation includes Gentle, Firm, and Final Notice versions with email and short DM drafts.'], ['Why is the free beta limited to 3 generations per day?','Each generation creates multiple drafts, and the limit helps prevent automated abuse while keeping the beta free.'], ['Does FreelancerReply send emails automatically?','No. FreelancerReply only generates drafts. You review, edit, copy, and send the message yourself.'], ['Can I use it for Upwork, Fiverr, WhatsApp, or LinkedIn messages?','You can copy the short DM version and adapt it for platforms where you communicate with clients. Make sure your message follows the platform’s rules and your client relationship context.'], ['Is this legal advice?','No. FreelancerReply does not provide legal, financial, accounting, debt collection, or professional advice. Generated emails are drafts only. Review them carefully before sending.'], ['Can I mention late fees or legal action?','Only mention late fees, service suspension, or legal action if you have verified that your contract and applicable rules allow it.'], ['Do you store my invoice or client details?','The current frontend does not persist generator inputs. Formal backend storage, AI provider retention, analytics, logs, and rate limits must be verified before launch.'], ['Is Pro available now?','No. Pro is not available in the current beta. You can join the waitlist if you want saved clients, brand voice, reminder sequences, or more tools.'] ];
+[Your Name]`,
+  dm: 'Hi Sarah — quick follow-up on the $850 website redesign invoice, which is now 12 days overdue. Could you let me know when I can expect payment?'
+};
+
+export const faqs = [
+  ['What does FreelancerReply do?', 'FreelancerReply helps freelancers draft late payment reminder messages. You describe the payment situation, and it recommends a reminder stage with a draft email and short DM.'],
+  ['Does FreelancerReply ask me to choose friendly, professional, or firm first?', 'No. FreelancerReply starts with the payment situation and recommends the right reminder stage before drafting the message.'],
+  ['Is FreelancerReply free?', 'Yes. FreelancerReply is free while in beta. Free usage limits apply so we can prevent abuse and keep the beta available.'],
+  ['What is a reminder session?', 'A reminder session starts when you generate one recommended reminder for a payment situation. A refinement means using “Make it softer” or “Make it firmer” on that draft.'],
+  ['Does FreelancerReply generate Gentle, Firm, and Final Notice all at once?', 'No. The current beta generates one recommended reminder for the situation you enter. Full reminder sequences may be added later as a Pro feature.'],
+  ['How does it choose the reminder stage?', 'The stage is based mainly on days overdue and previous reminders sent. Client relationship may also affect how direct the recommendation should be.'],
+  ['Does FreelancerReply send emails automatically?', 'No. FreelancerReply only creates drafts. You review, edit, copy, and send the message yourself.'],
+  ['Is this legal advice?', 'No. FreelancerReply does not provide legal, financial, accounting, tax, debt collection, or professional advice. Reminder stage recommendations are product suggestions, not legal conclusions.'],
+  ['Can I mention late fees or legal action?', 'Only mention late fees, service suspension, collections, or legal action if you have verified that your agreement and applicable rules allow it.'],
+  ['Do you store my invoice or client details?', 'The product intent is not to save generator inputs by default. However, inputs may be sent to an AI provider to generate the draft, and quota, analytics, waitlist, or email verification systems may process related data.'],
+  ['What happens if I hit the free limit?', 'You can come back later, verify your email for a higher free quota when available, or join the Pro Waitlist if you want future higher-limit workflow tools.'],
+  ['Is Pro available now?', 'No. Pro is not available in P0. Pro Waitlist is an interest check, not a paid subscription.']
+];

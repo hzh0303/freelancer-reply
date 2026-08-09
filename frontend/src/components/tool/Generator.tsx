@@ -2,41 +2,85 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { createAnonymousSession, generatePaymentReminder, getUsage, submitWaitlist, type ApiDraft, type GenerateApiResponse } from '@/lib/api';
+import {
+  createAnonymousSession,
+  generatePaymentReminder,
+  getUsage,
+  submitWaitlist,
+  type ApiDraft,
+  type GenerateApiResponse,
+  type PreviousReminders,
+  type ReminderStage,
+  type RefinementMode,
+  type Quota
+} from '@/lib/api';
 import { track } from '@/lib/analytics';
 
-type Tone = 'Friendly' | 'Professional' | 'Firm' | 'Final Notice';
-type Draft = { label: string; badge: string; description: string; subject: string; body: string; dm: string };
-type Quota = { used: number; limit: number; remaining: number; resetAt: string };
+type FormState = {
+  clientName: string;
+  amount: string;
+  days: string;
+  project: string;
+  previousReminders: PreviousReminders;
+  invoiceNumber: string;
+  paymentLink: string;
+  relationship: 'New client' | 'Repeat client' | 'Long-term client';
+};
+type ResultSnapshot = {
+  stage: ReminderStage;
+  reason: string;
+  subject: string;
+  body: string;
+  dm: string;
+  riskNotice?: string;
+  disclaimer?: string;
+  refinementMode: RefinementMode;
+  submittedForm: FormState;
+};
 
-const tones: Tone[] = ['Friendly', 'Professional', 'Firm', 'Final Notice'];
-const fallbackQuota: Quota = { used: 0, limit: 3, remaining: 3, resetAt: '' };
+type Recommendation = { stage: ReminderStage; reason: string; riskNotice?: string };
+const fallbackQuota: Quota = { used: 0, limit: 2, remaining: 2, resetAt: '' };
+const reminderOptions: { label: string; value: PreviousReminders }[] = [
+  { label: 'None', value: 'none' },
+  { label: '1 reminder', value: 'one' },
+  { label: '2 reminders', value: 'two' },
+  { label: '3+ reminders', value: 'three_plus' }
+];
 
-function parseTone(value: string | null): Tone {
-  return tones.includes(value as Tone) ? (value as Tone) : 'Professional';
+function parsePrevious(value: string | null): PreviousReminders {
+  return ['none', 'one', 'two', 'three_plus'].includes(value || '') ? (value as PreviousReminders) : 'none';
 }
-
-export function Generator() {
-  const qs = useSearchParams();
-  const [form, setForm] = useState(() => ({
+function parseRelationship(value: string | null): FormState['relationship'] {
+  return value === 'New client' || value === 'Long-term client' || value === 'Repeat client' ? value : 'Repeat client';
+}
+function countPrevious(value: PreviousReminders) {
+  return value === 'none' ? 0 : value === 'one' ? 1 : value === 'two' ? 2 : 3;
+}
+function firstForm(qs: URLSearchParams): FormState {
+  return {
     clientName: qs.get('clientName') || 'Sarah',
     amount: qs.get('amount') || '$850',
     days: qs.get('days') || '12',
     project: qs.get('project') || 'Website redesign',
-    tone: parseTone(qs.get('tone')),
+    previousReminders: parsePrevious(qs.get('previousReminders')),
     invoiceNumber: '',
     paymentLink: '',
-    relationship: 'Repeat client'
-  }));
+    relationship: parseRelationship(qs.get('relationship'))
+  };
+}
+
+export function Generator() {
+  const qs = useSearchParams();
+  const [form, setForm] = useState(() => firstForm(qs));
   const [showAdv, setShowAdv] = useState(false);
   const [state, setState] = useState<'empty' | 'loading' | 'success' | 'error'>('empty');
   const [errorMessage, setErrorMessage] = useState('');
-  const [active, setActive] = useState(0);
   const [toast, setToast] = useState('');
   const [waitlist, setWaitlist] = useState<{ open: boolean; feature?: string }>({ open: false });
-  const [apiResult, setApiResult] = useState<GenerateApiResponse | null>(null);
+  const [result, setResult] = useState<ResultSnapshot | null>(null);
   const [quota, setQuota] = useState<Quota>(fallbackQuota);
   const [apiSource, setApiSource] = useState<'ai_provider' | 'template_fallback' | 'frontend_fallback' | null>(null);
+  const [confirmFinal, setConfirmFinal] = useState(false);
 
   useEffect(() => {
     setForm((f) => ({
@@ -45,7 +89,8 @@ export function Generator() {
       amount: qs.get('amount') || f.amount,
       days: qs.get('days') || f.days,
       project: qs.get('project') || f.project,
-      tone: parseTone(qs.get('tone'))
+      previousReminders: parsePrevious(qs.get('previousReminders')),
+      relationship: parseRelationship(qs.get('relationship'))
     }));
   }, [qs]);
 
@@ -65,34 +110,44 @@ export function Generator() {
     };
   }, []);
 
-  const drafts = useMemo(() => (apiResult ? mapApiDrafts(apiResult) : null), [apiResult]);
+  const recommendation = useMemo(() => recommendStage(form), [form]);
 
-  async function generate(regen = false) {
+  async function generate(mode: RefinementMode = 'initial', overrideStage?: ReminderStage) {
     if (!form.clientName || !form.amount || !form.days || !form.project) {
       setState('error');
-      setErrorMessage('Please complete client name, invoice amount, days overdue, and project type.');
+      setErrorMessage('Please complete client name, invoice amount, days overdue, project or service, and previous reminders.');
       track('error_shown', { type: 'validation' });
       return;
     }
+    const stage = overrideStage || recommendation.stage;
+    const reason = stage === recommendation.stage ? recommendation.reason : refinementReason(mode, stage, recommendation.stage);
+    const submitted = { ...form };
     setState('loading');
     setErrorMessage('');
-    track(regen ? 'regenerate_clicked' : 'generator_started', { tone: form.tone });
+    track(mode === 'regenerate' ? 'regenerate_clicked' : mode === 'softer' ? 'make_softer_clicked' : mode === 'firmer' ? 'make_firmer_clicked' : 'generator_started', { stage });
     try {
-      const result = await generatePaymentReminder({
-        clientName: form.clientName,
-        invoiceAmount: form.amount,
-        daysOverdue: Number(form.days),
-        projectType: form.project,
-        tone: form.tone,
-        invoiceNumber: form.invoiceNumber || undefined,
-        paymentLink: form.paymentLink || undefined,
-        clientRelationship: form.relationship || undefined
+      const apiResult = await generatePaymentReminder({
+        clientName: submitted.clientName,
+        invoiceAmount: submitted.amount,
+        daysOverdue: Number(submitted.days),
+        projectType: submitted.project,
+        previousRemindersSent: submitted.previousReminders,
+        recommendedStage: stage,
+        refinementMode: mode,
+        stageReason: reason,
+        tone: toneForStage(stage, mode),
+        invoiceNumber: submitted.invoiceNumber || undefined,
+        paymentLink: submitted.paymentLink || undefined,
+        clientRelationship: submitted.relationship || undefined
       });
-      setApiResult(result);
-      setQuota(result.meta?.quota || quota);
-      setApiSource(result.meta?.source || null);
+      const normalized = normalizeApiResult(apiResult, stage, reason, mode, submitted);
+      setResult(normalized);
+      setQuota(apiResult.meta?.quota || quota);
+      setApiSource(apiResult.meta?.source || null);
       setState('success');
-      track('generator_completed', { tone: form.tone, source: result.meta?.source || 'unknown' });
+      track('stage_recommended', { stage: normalized.stage, mode });
+      track('generator_completed', { stage: normalized.stage, source: apiResult.meta?.source || 'unknown', mode });
+      if (normalized.stage === 'Final Notice') track('final_notice_warning_shown', { mode });
     } catch (error) {
       const e = error as Error & { code?: string; status?: number; resetAt?: string };
       setState('error');
@@ -104,8 +159,8 @@ export function Generator() {
   async function copy(text: string, kind: string) {
     try {
       await navigator.clipboard.writeText(text);
-      setToast('Copied to clipboard.');
-      track('copy_clicked', { kind });
+      setToast('Copied. Review once more before sending.');
+      track(kind === 'subject' ? 'copy_subject_clicked' : kind === 'short_dm' ? 'copy_short_dm_clicked' : 'copy_email_clicked', { kind });
     } catch {
       setToast('Could not copy automatically. Please select the text and copy it manually.');
       track('error_shown', { type: 'copy' });
@@ -113,55 +168,89 @@ export function Generator() {
     setTimeout(() => setToast(''), 2200);
   }
 
+  function softer() {
+    if (!result || state === 'loading') return;
+    generate('softer', adjacentStage(result.stage, -1));
+  }
+  function firmer() {
+    if (!result || state === 'loading') return;
+    const next = adjacentStage(result.stage, 1);
+    if (result.stage === 'Firm Reminder' && next === 'Final Notice') {
+      setConfirmFinal(true);
+      return;
+    }
+    generate('firmer', next);
+  }
+  function startOver() {
+    setResult(null);
+    setState('empty');
+    setErrorMessage('');
+  }
+
   return (
     <section data-clarity-mask="true" className="section grid items-start gap-6 lg:grid-cols-2 mobile-stack">
       <div className="paper-card p-6 md:p-8">
-        <h2 className="font-display text-3xl">Tell us what the reminder is about.</h2>
-        <p className="mt-2 text-sm muted">Use only the details needed to draft the email. Avoid entering sensitive financial, legal, or personal information.</p>
+        <h2 className="font-display text-3xl">Tell us what happened</h2>
+        <p className="mt-2 text-sm muted">Add the facts needed to recommend the right reminder stage. Avoid entering sensitive information that is not needed for the draft.</p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Input label="Client name" value={form.clientName} onChange={(v) => setForm({ ...form, clientName: v })} helper="Use a first name, company name, or placeholder." />
-          <Input label="Invoice amount" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} helper="Text only. FreelancerReply does not process payments." />
-          <Input label="Days overdue" type="number" value={form.days} onChange={(v) => setForm({ ...form, days: v })} helper="Approximate days are fine." />
-          <Input label="Service or project type" value={form.project} onChange={(v) => setForm({ ...form, project: v })} helper="Example: logo design or web development." />
+          <Input label="Invoice amount" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} helper="Used as text only. FreelancerReply does not process payments." />
+          <Input label="Days overdue" type="number" value={form.days} onChange={(v) => setForm({ ...form, days: v })} helper="Use 0 if due today. Negative numbers can mean not due yet." />
+          <Input label="Project or service" value={form.project} onChange={(v) => setForm({ ...form, project: v })} helper="Example: logo design or web development." />
           <fieldset className="sm:col-span-2">
-            <legend className="label mb-2">Tone</legend>
+            <legend className="label mb-2">Previous reminders sent</legend>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-              {tones.map((t) => (
-                <button type="button" key={t} onClick={() => { setForm({ ...form, tone: t }); track('tone_selected', { tone: t }); }} className={`chip justify-center text-center ${form.tone === t ? 'chip-active' : ''}`}>{t}</button>
+              {reminderOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option.value}
+                  onClick={() => setForm({ ...form, previousReminders: option.value })}
+                  className={`chip justify-center text-center ${form.previousReminders === option.value ? 'chip-active' : ''}`}
+                  aria-pressed={form.previousReminders === option.value}
+                >
+                  {option.label}
+                </button>
               ))}
             </div>
-            <p className="mt-2 text-xs muted">Final Notice can sound more serious. Review carefully before sending.</p>
+            <p className="mt-2 text-xs muted">This helps decide whether the next message should stay gentle, become firm, or be treated as a final notice candidate.</p>
           </fieldset>
+          <div className="sm:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4">
+            <p className="label">Current recommendation preview</p>
+            <p className="mt-2 font-display text-2xl">{recommendation.stage}</p>
+            <p className="mt-2 text-sm muted">{recommendation.reason}</p>
+          </div>
           <button className="text-left font-semibold text-[var(--primary)] sm:col-span-2" type="button" onClick={() => setShowAdv(!showAdv)}>{showAdv ? 'Hide optional details' : 'Add optional details'}</button>
           {showAdv ? <>
-            <Input label="Invoice number" value={form.invoiceNumber} onChange={(v) => setForm({ ...form, invoiceNumber: v })} />
-            <Input label="Payment link" value={form.paymentLink} onChange={(v) => setForm({ ...form, paymentLink: v })} helper="Included as text only; not opened or verified." />
-            <label className="sm:col-span-2"><span className="label">Client relationship</span><select className="input mt-1" value={form.relationship} onChange={(e) => setForm({ ...form, relationship: e.target.value })}>{['New client', 'Repeat client', 'Long-term client'].map((x) => <option key={x}>{x}</option>)}</select></label>
+            <label className="sm:col-span-2"><span className="label">Client relationship</span><select className="input mt-1" value={form.relationship} onChange={(e) => setForm({ ...form, relationship: e.target.value as FormState['relationship'] })}>{['New client', 'Repeat client', 'Long-term client'].map((x) => <option key={x}>{x}</option>)}</select><span className="mt-1 block text-xs muted">Optional. This can help make the draft more relationship-aware.</span></label>
+            <Input label="Invoice number" value={form.invoiceNumber} onChange={(v) => setForm({ ...form, invoiceNumber: v })} helper="Optional. Only include it if you want it in the draft." />
+            <Input label="Payment link" value={form.paymentLink} onChange={(v) => setForm({ ...form, paymentLink: v })} helper="Included as text only; not opened, verified, or processed." />
           </> : null}
-          <button className="btn btn-primary sm:col-span-2" onClick={() => generate(false)} disabled={state === 'loading'}>{state === 'loading' ? 'Drafting your reminder…' : 'Generate reminder'}</button>
-          <p className="sm:col-span-2 text-xs muted">By generating a draft, you understand that FreelancerReply does not provide legal, financial, accounting, or debt collection advice.</p>
+          <button className="btn btn-primary sm:col-span-2" onClick={() => generate('initial')} disabled={state === 'loading'}>{state === 'loading' ? 'Reviewing the situation…' : 'Get recommended reminder'}</button>
+          <p className="sm:col-span-2 text-xs muted">By generating a draft, you understand that FreelancerReply creates AI-assisted drafts only. It does not provide legal, financial, accounting, or debt collection advice.</p>
         </div>
       </div>
       <div className="paper-card overflow-hidden">
         <div className="border-b border-[var(--border)] bg-white p-6">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your reminder drafts are ready.' : state === 'loading' ? 'Drafting your reminder…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2 text-xs font-bold">{quota.remaining} of {quota.limit} free generations left today</span></div>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your recommended reminder is ready.' : state === 'loading' ? 'Reviewing the situation…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2 text-xs font-bold">{quota.remaining} of {quota.limit} free sessions left today</span></div>
           {apiSource ? <p className="mt-2 text-xs muted">Generation mode: {apiSource === 'template_fallback' ? 'Template fallback' : apiSource === 'ai_provider' ? 'Live AI generation' : 'Backend unavailable'}</p> : null}
-          {state === 'error' ? <p className="mt-3 text-sm text-red-700">{errorMessage}</p> : <p className="mt-3 text-sm muted">Review each version, adjust anything that does not fit, then copy the version you want to send.</p>}
-          {drafts ? <div className="mt-5 flex flex-wrap gap-2">{drafts.map((d, i) => <button key={d.label} className={`chip ${active === i ? 'chip-active' : ''}`} onClick={() => setActive(i)}>{d.label}</button>)}</div> : null}
+          {state === 'error' ? <p className="mt-3 text-sm text-red-700">{errorMessage}</p> : <p className="mt-3 text-sm muted">Describe the payment situation to get one recommended reminder stage and draft. Nothing is sent automatically.</p>}
         </div>
         <div className="p-6">
-          {state === 'loading' ? <div className="rounded-xl bg-[var(--paper)] p-8 text-center muted">Creating Gentle, Firm, and Final Notice versions. Please do not refresh.</div> : drafts ? <Result draft={drafts[Math.min(active, drafts.length - 1)]} copy={copy} /> : <EmptyResult />}
-          <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4 text-xs muted">AI-generated drafts may not fit your specific contract, client relationship, or local rules. This is not legal, financial, accounting, or debt collection advice. Review and edit before sending. Mention late fees, suspension, or legal action only if you have verified that you are allowed to do so.</div>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={() => generate(true)} disabled={state === 'loading' || !drafts}>Regenerate drafts</button><button className="btn btn-primary" onClick={() => drafts ? copy(`${drafts[Math.min(active, drafts.length - 1)].subject}\n\n${drafts[Math.min(active, drafts.length - 1)].body}`, 'email') : undefined} disabled={!drafts}>Copy email</button></div>
-          <div className="mt-5 grid gap-2 sm:grid-cols-4"><Gate label="Save this client" open={() => openGate('save_client')} /><Gate label="Schedule reminder" open={() => openGate('schedule')} /><Gate label="Export email sequence" open={() => openGate('export')} /><Gate label="Use my brand voice" open={() => openGate('brand_voice')} /></div>
+          {state === 'loading' ? <div className="rounded-xl bg-[var(--paper)] p-8 text-center muted">Recommending a stage and drafting your reminder. Please do not refresh.</div> : result ? <Result result={result} copy={copy} /> : <EmptyResult />}
+          <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4 text-xs muted">AI-generated drafts may not fit your specific contract, client relationship, or local rules. This is not legal, financial, accounting, or debt collection advice. Review and edit before sending. Mention late fees, suspension, collections, or legal action only if you have verified that you are allowed to do so.</div>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row"><button className="btn btn-secondary" onClick={softer} disabled={state === 'loading' || !result}>Make it softer</button><button className="btn btn-secondary" onClick={firmer} disabled={state === 'loading' || !result}>Make it firmer</button><button className="btn btn-secondary" onClick={() => result ? generate('regenerate', result.stage) : undefined} disabled={state === 'loading' || !result}>Regenerate</button><button className="btn btn-primary" onClick={() => result ? copy(`${result.subject}\n\n${result.body}`, 'email') : undefined} disabled={!result}>Copy email</button></div>
+          <div className="mt-5 grid gap-2 sm:grid-cols-4"><Gate label="Generate full sequence" open={() => openGate('full_sequence')} /><Gate label="Save this client" open={() => openGate('save_client')} /><Gate label="Save to history" open={() => openGate('history')} /><Gate label="Use my brand voice" open={() => openGate('brand_voice')} /></div>
+          <button className="mt-4 text-sm font-semibold text-[var(--primary)]" type="button" onClick={startOver}>Start over</button>
         </div>
       </div>
+      {confirmFinal ? <ConfirmFinal close={() => setConfirmFinal(false)} confirm={() => { setConfirmFinal(false); generate('firmer', 'Final Notice'); }} /> : null}
       {toast ? <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[var(--ink)] px-4 py-2 text-sm text-white">{toast}</div> : null}
       {waitlist.open ? <Waitlist feature={waitlist.feature} close={() => setWaitlist({ open: false })} /> : null}
     </section>
   );
 
   function openGate(feature: string) {
+    track('pro_waitlist_clicked', { feature });
     track('pro_feature_clicked', { feature });
     setWaitlist({ open: true, feature });
   }
@@ -171,10 +260,10 @@ function Input({ label, value, onChange, helper, type = 'text' }: { label: strin
   return <label><span className="label">{label}</span><input className="input mt-1" type={type} value={value} onChange={(e) => onChange(e.target.value)} />{helper ? <span className="mt-1 block text-xs muted">{helper}</span> : null}</label>;
 }
 function EmptyResult() {
-  return <div className="rounded-xl border border-dashed border-[var(--border)] bg-white p-6 text-sm muted">Complete the form and click <span className="font-semibold text-[var(--ink)]">Generate reminder</span>. Results are shown only after the backend returns a successful response.</div>;
+  return <div className="rounded-xl border border-dashed border-[var(--border)] bg-white p-6 text-sm muted"><h3 className="font-display text-2xl text-[var(--ink)]">Ready when you are.</h3><p className="mt-2">Complete the situation form and click <span className="font-semibold text-[var(--ink)]">Get recommended reminder</span>. Results are shown only after the backend returns a successful response.</p></div>;
 }
-function Result({ draft, copy }: { draft: Draft; copy: (text: string, kind: string) => void }) {
-  return <div><p className="label">{draft.badge}</p><p className="mt-2 text-sm muted">{draft.description}</p><Block title="Subject Line" text={draft.subject} onCopy={() => copy(draft.subject, 'subject')} /><Block title="Email Body" text={draft.body} onCopy={() => copy(draft.body, 'email_body')} /><Block title="Short DM / SMS" text={draft.dm} onCopy={() => copy(draft.dm, 'short_dm')} /></div>;
+function Result({ result, copy }: { result: ResultSnapshot; copy: (text: string, kind: string) => void }) {
+  return <div><div className="rounded-xl border border-[var(--border)] bg-[var(--primary-soft)] p-4"><p className="label">Recommended stage</p><p className="mt-2 font-display text-3xl">{result.stage}</p><p className="label mt-4">Why this stage?</p><p className="mt-2 text-sm muted">{result.reason}</p>{result.riskNotice ? <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{result.riskNotice}</p> : null}</div><Block title="Subject" text={result.subject} onCopy={() => copy(result.subject, 'subject')} /><Block title="Email" text={result.body} onCopy={() => copy(result.body, 'email_body')} /><Block title="Short DM" text={result.dm} onCopy={() => copy(result.dm, 'short_dm')} /></div>;
 }
 function Block({ title, text, onCopy }: { title: string; text: string; onCopy: () => void }) {
   return <div className="mt-5"><div className="mb-2 flex items-center justify-between"><span className="label">{title}</span><button className="text-sm font-semibold text-[var(--primary)]" onClick={onCopy}>Copy</button></div><pre className="whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-white p-4 text-sm leading-6">{text}</pre></div>;
@@ -182,10 +271,15 @@ function Block({ title, text, onCopy }: { title: string; text: string; onCopy: (
 function Gate({ label, open }: { label: string; open: () => void }) {
   return <button className="rounded-xl border border-[var(--border)] bg-white p-3 text-sm font-semibold" onClick={open}>{label}</button>;
 }
+function ConfirmFinal({ close, confirm }: { close: () => void; confirm: () => void }) {
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"><div className="paper-card max-w-lg p-6"><h2 className="font-display text-3xl">Do you want to move toward a Final Notice?</h2><p className="mt-3 muted">Final Notice wording can have legal or business consequences. Continue only if you have already followed up and believe a more formal message is appropriate.</p><div className="mt-5 flex gap-2"><button className="btn btn-primary" onClick={confirm}>Continue to Final Notice draft</button><button className="btn btn-secondary" onClick={close}>Keep it firm instead</button></div></div></div>;
+}
 function Waitlist({ close, feature }: { close: () => void; feature?: string }) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Developer');
-  const [problem, setProblem] = useState('');
+  const [featureInterest, setFeatureInterest] = useState(feature || 'Full reminder sequence');
+  const [frequency, setFrequency] = useState('A few times a year');
+  const [willingness, setWillingness] = useState('$9/month');
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
   async function submit() {
@@ -195,26 +289,69 @@ function Waitlist({ close, feature }: { close: () => void; feature?: string }) {
       return;
     }
     try {
-      await submitWaitlist({ email, role, biggestPaymentProblem: problem, sourcePage: window.location.pathname, featureInterest: feature });
-      track('waitlist_submitted', { source: 'modal', feature: feature || 'unknown' });
+      await submitWaitlist({ email, role, biggestPaymentProblem: `${featureInterest}; late payment frequency: ${frequency}; pricing willingness: ${willingness}`, sourcePage: window.location.pathname, featureInterest });
+      track('waitlist_submitted', { source: 'modal', feature: featureInterest, willingness });
       setDone(true);
     } catch (e) {
       setError((e as Error).message || 'Could not join the waitlist. Please try again.');
       track('error_shown', { type: 'waitlist_api' });
     }
   }
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"><div className="paper-card max-w-lg p-6"><h2 className="font-display text-3xl">{done ? 'You’re on the waitlist.' : 'Want higher limits and saved client tools?'}</h2>{done ? <p className="mt-3 muted">Thanks — we’ll use beta feedback to decide which Pro features to build next.</p> : <><p className="mt-3 muted">Join the Pro waitlist if you want saved clients, brand voice, reminder sequences, and more freelancer email generators.</p><label className="mt-5 block"><span className="label">Email address</span><input className="input mt-1" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} /></label><label className="mt-3 block"><span className="label">Role</span><select className="input mt-1" value={role} onChange={(e) => setRole(e.target.value)}>{['Designer', 'Developer', 'Marketer', 'Copywriter', 'Consultant', 'Virtual assistant', 'Other'].map((x) => <option key={x}>{x}</option>)}</select></label><label className="mt-3 block"><span className="label">What client email do you struggle with most?</span><input className="input mt-1" value={problem} onChange={(e) => setProblem(e.target.value)} placeholder="Late payments, proposal follow-ups, scope creep…" /></label>{error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}<p className="mt-2 text-xs muted">By joining the waitlist, you agree that we may store your email to contact you about FreelancerReply. You can request deletion later.</p></>}<div className="mt-5 flex gap-2">{done ? null : <button className="btn btn-primary" onClick={submit}>Join waitlist</button>}<button className="btn btn-secondary" onClick={close}>{done ? 'Back to generator' : 'Not now'}</button></div></div></div>;
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"><div className="paper-card max-w-lg p-6"><h2 className="font-display text-3xl">{done ? 'You’re on the Pro Waitlist.' : 'Want the next follow-up too?'}</h2>{done ? <p className="mt-3 muted">Thanks. We’ll use beta feedback to decide which Pro features to build first.</p> : <><p className="mt-3 muted">FreelancerReply Pro is planned to help with full reminder sequences, saved clients, reminder history, brand voice, and more freelancer email tools. No payment required.</p><label className="mt-5 block"><span className="label">Email address</span><input className="input mt-1" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} /></label><label className="mt-3 block"><span className="label">What kind of freelancer are you?</span><select className="input mt-1" value={role} onChange={(e) => setRole(e.target.value)}>{['Designer', 'Developer', 'Copywriter', 'Marketer', 'Consultant', 'Virtual assistant', 'Solo agency', 'Other'].map((x) => <option key={x}>{x}</option>)}</select></label><label className="mt-3 block"><span className="label">Which Pro feature would help you most?</span><select className="input mt-1" value={featureInterest} onChange={(e) => { setFeatureInterest(e.target.value); track('pro_feature_selected', { feature: e.target.value }); }}>{['Full reminder sequence', 'Saved clients', 'Reminder history', 'Brand voice', 'More freelancer email tools', 'Higher usage limits', 'Not sure yet'].map((x) => <option key={x}>{x}</option>)}</select></label><label className="mt-3 block"><span className="label">How often do clients pay late?</span><select className="input mt-1" value={frequency} onChange={(e) => setFrequency(e.target.value)}>{['Rarely', 'A few times a year', 'Monthly', 'Often', 'Prefer not to say'].map((x) => <option key={x}>{x}</option>)}</select></label><label className="mt-3 block"><span className="label">What would feel reasonable if Pro launches?</span><select className="input mt-1" value={willingness} onChange={(e) => { setWillingness(e.target.value); track('pricing_willingness_selected', { value: e.target.value }); }}>{['$5/month', '$9/month', '$19/month', 'One-time payment', 'Not sure yet', 'I only want the free beta'].map((x) => <option key={x}>{x}</option>)}</select></label>{error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}<p className="mt-2 text-xs muted">By joining the waitlist, you agree that we may store your email to contact you about FreelancerReply. You can request deletion later.</p></>}<div className="mt-5 flex gap-2">{done ? null : <button className="btn btn-primary" onClick={submit}>Join Pro Waitlist</button>}<button className="btn btn-secondary" onClick={close}>{done ? 'Back to generator' : 'Not now'}</button></div></div></div>;
 }
-function mapApiDrafts(result: GenerateApiResponse): Draft[] {
-  return [toDraft('Gentle', 'Early follow-up', 'Best for a first reminder or a relationship you want to keep warm.', result.gentle), toDraft('Firm', 'Clear follow-up', 'Best when the invoice is clearly overdue and you need a more direct request.', result.firm), toDraft('Final Notice', 'Review carefully', 'Best for later-stage follow-up. Do not add late fees or legal action unless verified.', result.finalNotice)];
+
+function recommendStage(form: FormState): Recommendation {
+  const days = Number(form.days);
+  const previous = countPrevious(form.previousReminders);
+  const relationshipPhrase = form.relationship === 'Long-term client' ? ' Because this is a long-term client, the wording should stay relationship-aware.' : form.relationship === 'New client' ? ' Because this is a new client, the draft should be clear without assuming bad intent.' : '';
+  if (Number.isNaN(days)) return { stage: 'Gentle Reminder', reason: 'Please enter a valid overdue day count so FreelancerReply can recommend a stage.' };
+  if (days <= 0) return { stage: 'Due Soon / Due Today', reason: 'The invoice is not overdue yet or is due today, so a light reminder is more appropriate than a collection-style follow-up.' };
+  if (days <= 6) {
+    if (previous >= 2) return { stage: 'Firm Reminder', reason: `The invoice is only ${days} days overdue, but you have already sent multiple reminders. A more direct reminder is reasonable while staying professional.${relationshipPhrase}` };
+    return { stage: 'Gentle Reminder', reason: `The invoice is ${days} days overdue and you have sent ${previous === 0 ? 'no previous reminders' : 'one previous reminder'}, so a gentle follow-up is a safer starting point.${relationshipPhrase}` };
+  }
+  if (days <= 20) return { stage: 'Firm Reminder', reason: `The invoice is ${days} days overdue${previous ? ` and you have already sent ${previous} reminder${previous > 1 ? 's' : ''}` : ''}, so a direct but relationship-safe follow-up is appropriate.${relationshipPhrase}` };
+  if (days <= 29) {
+    if (previous >= 2) return { stage: 'Final Notice', reason: `The invoice is significantly overdue and you have already sent multiple reminders, so a final notice may be appropriate. Review carefully before sending.${relationshipPhrase}`, riskNotice: finalNoticeWarning };
+    return { stage: 'Firm Reminder', reason: `The invoice is ${days} days overdue, but you have sent ${previous === 0 ? 'no previous reminders' : 'only one previous reminder'}. A firm reminder is safer than starting with a final notice.${relationshipPhrase}` };
+  }
+  if (previous >= 2) return { stage: 'Final Notice', reason: `The invoice is over 30 days overdue and you have already sent multiple reminders, so Final Notice wording may be appropriate. Review carefully before sending.${relationshipPhrase}`, riskNotice: finalNoticeWarning };
+  return { stage: 'Firm Reminder', reason: `Even though the invoice is over 30 days overdue, this appears to be ${previous === 0 ? 'your first reminder' : 'only your second reminder'}. A firm reminder is safer than starting with a final notice.${relationshipPhrase}` };
 }
-function toDraft(label: string, badge: string, description: string, draft: ApiDraft): Draft {
-  return { label, badge, description, subject: draft.subject, body: draft.emailBody, dm: draft.shortMessage };
+const finalNoticeWarning = 'Final notices can have legal or business consequences. This is not legal advice. Do not mention late fees, collections, service suspension, or legal action unless you have confirmed your agreement and applicable rules allow it.';
+function adjacentStage(stage: ReminderStage, direction: -1 | 1): ReminderStage {
+  const order: ReminderStage[] = ['Due Soon / Due Today', 'Gentle Reminder', 'Firm Reminder', 'Final Notice'];
+  const index = order.indexOf(stage);
+  return order[Math.max(0, Math.min(order.length - 1, index + direction))];
+}
+function toneForStage(stage: ReminderStage, mode: RefinementMode) {
+  if (mode === 'softer') return 'Friendly';
+  if (stage === 'Final Notice') return 'Final Notice';
+  if (stage === 'Firm Reminder' || mode === 'firmer') return 'Firm';
+  return 'Professional';
+}
+function refinementReason(mode: RefinementMode, stage: ReminderStage, original: ReminderStage) {
+  if (mode === 'softer') return `The user asked to make the ${original} draft softer while keeping the payment request clear.`;
+  if (mode === 'firmer') return `The user asked to make the ${original} draft firmer. Keep it professional and avoid unsupported legal threats.`;
+  return `Regenerate the current ${stage} draft with the same situation.`;
+}
+function normalizeApiResult(api: GenerateApiResponse, stage: ReminderStage, reason: string, mode: RefinementMode, submittedForm: FormState): ResultSnapshot {
+  if ('recommendedStage' in api) {
+    return { stage: api.recommendedStage, reason: api.stageReason, subject: api.subject, body: api.emailBody, dm: api.shortMessage, riskNotice: api.riskNotice, disclaimer: api.disclaimer, refinementMode: mode, submittedForm };
+  }
+  const selected = draftForStage(api, stage);
+  return { stage, reason, subject: selected.subject, body: selected.emailBody, dm: selected.shortMessage, riskNotice: stage === 'Final Notice' ? finalNoticeWarning : undefined, disclaimer: api.disclaimer, refinementMode: mode, submittedForm };
+}
+function draftForStage(api: { gentle: ApiDraft; firm: ApiDraft; finalNotice: ApiDraft }, stage: ReminderStage) {
+  if (stage === 'Final Notice') return api.finalNotice;
+  if (stage === 'Firm Reminder') return api.firm;
+  return api.gentle;
 }
 function messageForApiError(e: { code?: string; status?: number; message?: string; resetAt?: string }) {
   if (e.code === 'QUOTA_EXCEEDED' || e.status === 402) return `You’ve reached today’s free beta limit. Come back after ${e.resetAt ? new Date(e.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
   if (e.code === 'RATE_LIMITED' || e.status === 429) return 'Too many requests. Please wait a bit and try again.';
   if (e.code === 'PROVIDER_UNAVAILABLE' || e.status === 503) return 'The generator is temporarily unavailable. Please try again in a few minutes.';
+  if (e.code === 'TURNSTILE_FAILED' || e.status === 403) return 'Security verification failed. Please refresh and try again.';
   if (e.code === 'VALIDATION_ERROR') return e.message || 'Some details are invalid. Please review your inputs.';
   return e.message || 'Something went wrong while generating your draft. Please try again.';
 }

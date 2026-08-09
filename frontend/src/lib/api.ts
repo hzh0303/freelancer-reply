@@ -1,33 +1,53 @@
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://freelancer-reply-api.huangzhenhui0303.workers.dev').replace(/\/$/, '');
 
+export type ReminderStage = 'Due Soon / Due Today' | 'Gentle Reminder' | 'Firm Reminder' | 'Final Notice';
+export type PreviousReminders = 'none' | 'one' | 'two' | 'three_plus';
+export type ClientRelationship = 'New client' | 'Repeat client' | 'Long-term client';
+export type RefinementMode = 'initial' | 'softer' | 'firmer' | 'regenerate';
+
 export type ApiDraft = { subject: string; emailBody: string; shortMessage: string };
-export type GenerateApiResponse = {
+export type Quota = { used: number; limit: number; remaining: number; resetAt: string };
+export type GenerateMeta = {
+  source?: 'ai_provider' | 'template_fallback';
+  provider?: string;
+  model?: string;
+  quota?: Quota;
+  inputStored?: false;
+  usage?: {
+    provider?: string;
+    requestedModel?: string;
+    actualModel?: string;
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
+    providerCost?: number;
+    providerCostUnit?: string;
+  };
+};
+
+export type LegacyGenerateApiResponse = {
   gentle: ApiDraft;
   firm: ApiDraft;
   finalNotice: ApiDraft;
   disclaimer: string;
-  meta?: {
-    source?: 'ai_provider' | 'template_fallback';
-    model?: string;
-    quota?: { used: number; limit: number; remaining: number; resetAt: string };
-    inputStored?: false;
-    usage?: {
-      provider?: string;
-      requestedModel?: string;
-      actualModel?: string;
-      promptTokens?: number;
-      completionTokens?: number;
-      totalTokens?: number;
-      providerCost?: number;
-      providerCostUnit?: string;
-    };
-  };
+  meta?: GenerateMeta;
 };
+export type RecommendedGenerateApiResponse = {
+  recommendedStage: ReminderStage;
+  stageReason: string;
+  subject: string;
+  emailBody: string;
+  shortMessage: string;
+  riskNotice?: string;
+  disclaimer?: string;
+  meta?: GenerateMeta;
+};
+export type GenerateApiResponse = LegacyGenerateApiResponse | RecommendedGenerateApiResponse;
 export type UsageApiResponse = {
   ok: boolean;
   usage: {
-    generatePaymentReminder: { used: number; limit: number; remaining: number; resetAt: string };
-    waitlistSubmit: { used: number; limit: number; remaining: number; resetAt: string };
+    generatePaymentReminder: Quota;
+    waitlistSubmit: Quota;
   };
 };
 export type ApiError = Error & { code?: string; status?: number; resetAt?: string };
@@ -65,7 +85,11 @@ export async function generatePaymentReminder(input: {
   invoiceAmount: string;
   daysOverdue: number;
   projectType: string;
-  tone: string;
+  previousRemindersSent: PreviousReminders;
+  recommendedStage: ReminderStage;
+  refinementMode?: RefinementMode;
+  stageReason?: string;
+  tone?: string;
   invoiceNumber?: string;
   paymentLink?: string;
   clientRelationship?: string;
