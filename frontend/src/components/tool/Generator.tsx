@@ -199,6 +199,14 @@ export function Generator() {
     } catch (error) {
       const e = error as Error & { code?: string; status?: number; resetAt?: string };
       setState(result ? 'success' : 'error');
+      if (e.code === 'REMINDER_SESSION_REFINEMENT_LIMIT_REACHED' || e.code === 'REMINDER_SESSION_NOT_FOUND') {
+        setResult((current) => current ? {
+          ...current,
+          reminderSession: current.reminderSession
+            ? { ...current.reminderSession, refinementCount: current.reminderSession.refinementLimit }
+            : { id: current.reminderSessionId || '', refinementCount: 1, refinementLimit: 1 }
+        } : current);
+      }
       setErrorMessage(messageForApiError(e));
       await refreshUsage().catch(() => null);
       track('error_shown', { type: e.code || e.status || 'api_error' });
