@@ -98,6 +98,39 @@ try {
     throw new Error(`home checks failed ${JSON.stringify(home)}`);
   }
 
+  await page.setViewportSize({ width: 1200, height: 900 });
+  for (const item of [
+    { name: 'Examples', hash: '#example', target: '#example' },
+    { name: 'Pricing', hash: '#pricing', target: '#pricing' },
+    { name: 'FAQ', hash: '#faq', target: '#faq' },
+    { name: 'Pro waitlist', hash: '#waitlist', target: '#waitlist' }
+  ]) {
+    await page.goto(`${base}/`, { waitUntil: 'networkidle' });
+    await page.locator('header').getByRole('link', { name: item.name, exact: true }).click();
+    await page.waitForFunction((hash) => window.location.hash === hash, item.hash);
+    const navCheck = await page.evaluate((targetSelector) => {
+      const header = document.querySelector('header')?.getBoundingClientRect();
+      const target = document.querySelector(targetSelector)?.getBoundingClientRect();
+      const active = document.querySelector('a[aria-current="page"]')?.textContent?.trim();
+      return {
+        headerTop: header?.top,
+        headerBottom: header?.bottom,
+        targetTop: target?.top,
+        active,
+        hash: window.location.hash
+      };
+    }, item.target);
+    if ((navCheck.headerTop ?? 999) > 1 || (navCheck.headerBottom ?? 0) < 40) throw new Error(`header not visible after ${item.name}: ${JSON.stringify(navCheck)}`);
+    if ((navCheck.targetTop ?? -999) < 70) throw new Error(`target hidden under header after ${item.name}: ${JSON.stringify(navCheck)}`);
+    if (navCheck.active !== item.name) throw new Error(`active nav failed for ${item.name}: ${JSON.stringify(navCheck)}`);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.locator('header').getByRole('link', { name: item.name, exact: true }).click();
+    await page.waitForFunction((selector) => {
+      const rect = document.querySelector(selector)?.getBoundingClientRect();
+      return rect && rect.top >= 70 && rect.top < window.innerHeight;
+    }, item.target);
+  }
+
   for (const width of widths) {
     await page.setViewportSize({ width, height: 1000 });
     for (const r of ['/', '/late-payment-reminder-email-generator', '/privacy-policy', '/terms-of-service']) {
