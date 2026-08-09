@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   createAnonymousSession,
@@ -15,6 +15,7 @@ import {
   type Quota
 } from '@/lib/api';
 import { track } from '@/lib/analytics';
+import { TurnstileWidget } from './TurnstileWidget';
 
 type FormState = {
   clientName: string;
@@ -51,6 +52,7 @@ type PendingAction = {
 };
 const fallbackQuota: Quota = { used: 0, limit: 2, remaining: 2, resetAt: '' };
 const fallbackHourlyQuota: Quota = { used: 0, limit: 4, remaining: 4, resetAt: '' };
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 const reminderOptions: { label: string; value: PreviousReminders }[] = [
   { label: 'None', value: 'none' },
   { label: '1 reminder', value: 'one' },
@@ -94,6 +96,16 @@ export function Generator() {
   const [hourlyQuota, setHourlyQuota] = useState<Quota>(fallbackHourlyQuota);
   const [apiSource, setApiSource] = useState<'ai_provider' | 'template_fallback' | 'frontend_fallback' | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileStatus, setTurnstileStatus] = useState<'idle' | 'ready' | 'error' | 'expired'>('idle');
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+
+  const handleTurnstileToken = useCallback((token: string) => setTurnstileToken(token), []);
+  const handleTurnstileStatus = useCallback((status: 'idle' | 'ready' | 'error' | 'expired') => setTurnstileStatus(status), []);
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken('');
+    setTurnstileResetKey((key) => key + 1);
+  }, []);
 
   useEffect(() => {
     setForm((f) => ({
@@ -138,6 +150,11 @@ export function Generator() {
       track('error_shown', { type: mode === 'initial' ? 'session_quota_preflight' : 'refinement_quota_preflight' });
       return;
     }
+    if (turnstileSiteKey && !turnstileToken) {
+      setErrorMessage(turnstileStatus === 'expired' ? 'Security verification expired. Please complete the check again.' : 'Complete the security check before generating a draft.');
+      track('error_shown', { type: 'turnstile_preflight' });
+      return;
+    }
     if (!form.clientName || !form.amount || !form.days || !form.project) {
       setState(result ? 'success' : 'error');
       setErrorMessage('Please complete client name, invoice amount, days overdue, project or service, and previous reminders.');
@@ -164,7 +181,8 @@ export function Generator() {
         tone: toneForStage(stage, mode),
         invoiceNumber: submitted.invoiceNumber || undefined,
         paymentLink: submitted.paymentLink || undefined,
-        clientRelationship: submitted.relationship || undefined
+        clientRelationship: submitted.relationship || undefined,
+        turnstileToken: turnstileToken || undefined
       });
       const normalized = normalizeApiResult(apiResult, stage, reason, mode, submitted);
       setResult(normalized);
@@ -181,6 +199,8 @@ export function Generator() {
       setErrorMessage(messageForApiError(e));
       await refreshUsage().catch(() => null);
       track('error_shown', { type: e.code || e.status || 'api_error' });
+    } finally {
+      if (turnstileSiteKey) resetTurnstile();
     }
   }
 
@@ -274,8 +294,9 @@ export function Generator() {
   const hourlyBlocked = hourlyQuota.limit > 0 && hourlyQuota.remaining <= 0;
   const sessionBlocked = quota.limit > 0 && quota.remaining <= 0;
   const refinementBlocked = refinementQuota.limit > 0 && refinementQuota.remaining <= 0;
-  const canGenerateInitial = state !== 'loading' && !sessionBlocked && !hourlyBlocked;
-  const canRefine = state !== 'loading' && Boolean(result) && !refinementBlocked && !hourlyBlocked;
+  const turnstileBlocked = Boolean(turnstileSiteKey) && !turnstileToken;
+  const canGenerateInitial = state !== 'loading' && !sessionBlocked && !hourlyBlocked && !turnstileBlocked;
+  const canRefine = state !== 'loading' && Boolean(result) && !refinementBlocked && !hourlyBlocked && !turnstileBlocked;
   const quotaNotice = hourlyBlocked
     ? `Too many AI requests this hour. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`
     : sessionBlocked
@@ -322,6 +343,12 @@ export function Generator() {
             <Input label="Invoice number" value={form.invoiceNumber} onChange={(v) => setForm({ ...form, invoiceNumber: v })} helper="Optional. Only include it if you want it in the draft." />
             <Input label="Payment link" value={form.paymentLink} onChange={(v) => setForm({ ...form, paymentLink: v })} helper="Included as text only; not opened, verified, or processed." />
           </> : null}
+          <div className="sm:col-span-2">
+            <TurnstileWidget siteKey={turnstileSiteKey} resetKey={turnstileResetKey} onTokenChange={handleTurnstileToken} onStatusChange={handleTurnstileStatus} />
+            {turnstileSiteKey && turnstileBlocked ? <p className="mt-2 text-xs muted">Complete the security check to enable AI generation.</p> : null}
+            {turnstileStatus === 'error' ? <p role="alert" className="mt-2 text-sm text-red-700">Security verification could not load. Refresh the page and try again.</p> : null}
+            {turnstileStatus === 'expired' ? <p role="alert" className="mt-2 text-sm text-red-700">Security verification expired. Complete the check again before generating.</p> : null}
+          </div>
           <button className="btn btn-primary sm:col-span-2" onClick={() => generate('initial')} disabled={!canGenerateInitial}>{state === 'loading' ? <span className="inline-flex items-center gap-2"><Spinner /> Generating…</span> : 'Get recommended reminder'}</button>
           <p className="sm:col-span-2 text-xs muted">By generating a draft, you understand that FreelancerReply creates AI-assisted drafts only. It does not provide legal, financial, accounting, or debt collection advice.</p>
         </div>

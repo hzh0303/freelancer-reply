@@ -95,6 +95,7 @@ export async function generatePaymentReminder(input: {
   invoiceNumber?: string;
   paymentLink?: string;
   clientRelationship?: string;
+  turnstileToken?: string;
 }) {
   return apiFetch<GenerateApiResponse>('/api/generate-payment-reminder', {
     method: 'POST',

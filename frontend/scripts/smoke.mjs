@@ -68,6 +68,10 @@ async function installApiMocks(page) {
   await page.route('**/api/generate-payment-reminder', async (route) => {
     generateCalls += 1;
     const input = route.request().postDataJSON();
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && input.turnstileToken !== 'smoke-turnstile-token') {
+      await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ ok: false, code: 'TURNSTILE_FAILED', message: 'Bot protection token is required.' }) });
+      return;
+    }
     if (input.refinementMode === 'initial' || !input.refinementMode) initialCalls += 1;
     else refinementCalls += 1;
     const stage = input.recommendedStage || recommend(input.daysOverdue, input.previousRemindersSent);
@@ -81,6 +85,16 @@ async function installApiMocks(page) {
 const browser = await chromium.launch();
 try {
   const ctx = await browser.newContext();
+  await ctx.addInitScript(() => {
+    window.turnstile = {
+      render: (_container, options) => {
+        setTimeout(() => options.callback?.('smoke-turnstile-token'), 0);
+        return `smoke-widget-${Math.random()}`;
+      },
+      reset: () => {},
+      remove: () => {}
+    };
+  });
   const page = await ctx.newPage();
   page.on('console', (msg) => {
     if (msg.type() === 'error') errors.push(`console:${msg.text()}`);
