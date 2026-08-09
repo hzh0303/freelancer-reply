@@ -56,24 +56,42 @@ export type UsageApiResponse = {
 };
 export type ApiError = Error & { code?: string; status?: number; resetAt?: string };
 
-async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: {
-      'content-type': 'application/json',
-      ...(init.headers || {})
+const DEFAULT_API_TIMEOUT_MS = 12_000;
+const GENERATE_API_TIMEOUT_MS = 45_000;
+
+async function apiFetch<T>(path: string, init: RequestInit = {}, timeoutMs = DEFAULT_API_TIMEOUT_MS): Promise<T> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      credentials: 'include',
+      signal: controller.signal,
+      headers: {
+        'content-type': 'application/json',
+        ...(init.headers || {})
+      }
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const error = new Error(data.message || data.error || `API request failed with ${res.status}`) as ApiError;
+      error.code = data.code || data.error;
+      error.status = res.status;
+      error.resetAt = data.resetAt;
+      throw error;
     }
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const error = new Error(data.message || data.error || `API request failed with ${res.status}`) as ApiError;
-    error.code = data.code || data.error;
-    error.status = res.status;
-    error.resetAt = data.resetAt;
+    return data as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      const timeoutError = new Error('The request timed out. Please try again.') as ApiError;
+      timeoutError.code = 'REQUEST_TIMEOUT';
+      timeoutError.status = 408;
+      throw timeoutError;
+    }
     throw error;
+  } finally {
+    window.clearTimeout(timeout);
   }
-  return data as T;
 }
 
 export async function createAnonymousSession() {
@@ -103,7 +121,7 @@ export async function generatePaymentReminder(input: {
   return apiFetch<GenerateApiResponse>('/api/generate-payment-reminder', {
     method: 'POST',
     body: JSON.stringify(input)
-  });
+  }, GENERATE_API_TIMEOUT_MS);
 }
 
 export async function submitWaitlist(input: {

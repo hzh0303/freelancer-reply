@@ -530,6 +530,7 @@ function messageForApiError(e: { code?: string; status?: number; message?: strin
   if (e.code === 'QUOTA_EXCEEDED' || e.status === 402) return `You’ve reached today’s free beta limit. Come back after ${e.resetAt ? new Date(e.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
   if (e.code === 'RATE_LIMITED' || e.status === 429) return 'Too many requests. Please wait a bit and try again.';
   if (e.code === 'PROVIDER_UNAVAILABLE' || e.status === 503) return 'The generator is temporarily unavailable. Please try again in a few minutes.';
+  if (e.code === 'REQUEST_TIMEOUT' || e.status === 408) return 'The generator took too long to respond. Please refresh the security check and try again.';
   if (e.code === 'TURNSTILE_FAILED' || e.status === 403) return 'Security verification failed. Please refresh and try again.';
   if (e.code === 'VALIDATION_ERROR') return e.message || 'Some details are invalid. Please review your inputs.';
   return e.message || 'Something went wrong while generating your draft. Please try again.';

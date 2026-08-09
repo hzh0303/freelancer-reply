@@ -7,6 +7,7 @@ export interface Env {
   AI_PROVIDER_BASE_URL?: string;
   AI_MODEL?: string;
   AI_MAX_TOKENS?: string;
+  AI_PROVIDER_TIMEOUT_MS?: string;
   TURNSTILE_SECRET_KEY?: string;
   SITE_NAME: string;
   SITE_SLUG: string;
@@ -746,20 +747,32 @@ async function generateWithAI(input: NormalizedGenerateInput, env: Env): Promise
     headers['HTTP-Referer'] = env.APP_ORIGIN || 'https://freelancerreply.com';
     headers['X-OpenRouter-Title'] = env.SITE_NAME || 'FreelancerReply';
   }
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model,
-      temperature: 0.45,
-      max_tokens: maxTokens,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: 'You write concise, professional freelancer payment follow-up drafts. Return valid JSON only. Generate one recommended draft, not multiple variants. Never claim to send emails. Never provide legal, financial, accounting, tax, or debt collection advice.' },
-        { role: 'user', content: prompt }
-      ]
-    })
-  });
+  const providerTimeoutMs = getInt(env.AI_PROVIDER_TIMEOUT_MS, 30_000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), providerTimeoutMs);
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        temperature: 0.45,
+        max_tokens: maxTokens,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: 'You write concise, professional freelancer payment follow-up drafts. Return valid JSON only. Generate one recommended draft, not multiple variants. Never claim to send emails. Never provide legal, financial, accounting, tax, or debt collection advice.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw new Error(`AI provider timed out after ${providerTimeoutMs}ms`);
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
     throw new Error(`AI provider HTTP ${res.status}: ${errText.slice(0, 300)}`);
