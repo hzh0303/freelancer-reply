@@ -124,7 +124,7 @@ try {
   await page.goto(`${base}/`, { waitUntil: 'networkidle' });
   const home = await page.evaluate(() => ({
     h1: document.querySelectorAll('h1').length,
-    hasCTA: document.body.innerText.includes('Start a reminder session'),
+    hasCTA: document.body.innerText.includes('Start a reminder'),
     hasToolEntry: document.body.innerText.toLowerCase().includes('previous reminders sent'),
     hasLegal: document.body.innerText.includes('Privacy Policy') && document.body.innerText.includes('Terms of Service'),
     oldTonePicker: document.body.innerText.includes('Tone picker') || document.body.innerText.includes('Choose a tone'),

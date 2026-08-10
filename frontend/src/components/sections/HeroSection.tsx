@@ -17,7 +17,7 @@ export function HeroSection() {
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--primary-soft)] px-4 py-2 text-xs font-bold uppercase tracking-wide muted"><span className="h-2 w-2 rounded-full bg-[var(--primary)]" />Free beta • Drafts only</div>
         <h1 className="font-display text-[56px] font-semibold leading-[1.05] tracking-[-.03em]">Know what to say when a client hasn’t paid.</h1>
         <p className="mt-6 max-w-xl text-lg leading-8 muted">Describe what happened — how overdue the invoice is, how many reminders you’ve sent, and your client relationship. Get one recommended reminder with a clear reason, subject line, email body, and short DM.</p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link className="btn btn-primary" href={routes.tool}>Start a reminder session</Link><Link className="btn btn-secondary" href="#example">See an example</Link></div>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link className="btn btn-primary" href={routes.tool}>Start a reminder</Link><Link className="btn btn-secondary" href="#example">See an example</Link></div>
         <p className="mt-4 text-sm muted">✓ Nothing is sent automatically. You review, edit, copy, and send it yourself.</p>
       </div>
       <div className="paper-card p-5 md:p-7">

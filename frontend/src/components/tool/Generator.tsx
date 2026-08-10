@@ -68,6 +68,9 @@ function parsePrevious(value: string | null): PreviousReminders {
 function parseRelationship(value: string | null): FormState['relationship'] {
   return value === 'New client' || value === 'Long-term client' || value === 'Repeat client' ? value : 'Repeat client';
 }
+function formatReset(resetAt?: string) {
+  return resetAt ? new Date(resetAt).toLocaleString() : 'the next reset';
+}
 function countPrevious(value: PreviousReminders) {
   return value === 'none' ? 0 : value === 'one' ? 1 : value === 'two' ? 2 : 3;
 }
@@ -182,8 +185,6 @@ export function Generator() {
     track(mode === 'regenerate' ? 'regenerate_clicked' : mode === 'softer' ? 'make_softer_clicked' : mode === 'firmer' ? 'make_firmer_clicked' : 'generator_started', { stage });
     const activeTurnstileToken = turnstileTokenRef.current || turnstileToken || undefined;
     try {
-      // Ensure anonymous session cookie exists on this origin before generate.
-      await createAnonymousSession().catch(() => null);
       const apiResult = await generatePaymentReminder({
         clientName: submitted.clientName,
         invoiceAmount: submitted.amount,
@@ -220,7 +221,7 @@ export function Generator() {
             : { id: current.reminderSessionId || '', refinementCount: 1, refinementLimit: 1 }
         } : current);
       }
-      setErrorMessage(messageForApiError(e));
+      setErrorMessage(messageForApiError(e, mode));
       refreshUsage().catch(() => null);
       track('error_shown', { type: e.code || e.status || 'api_error' });
     } finally {
@@ -242,15 +243,19 @@ export function Generator() {
   }
 
   function preflightLimitMessage(mode: RefinementMode) {
-    if (hourlyQuota.limit > 0 && hourlyQuota.remaining <= 0) {
-      return `Too many AI requests this hour. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`;
-    }
     if (mode === 'initial') {
-      if (quota.limit > 0 && quota.remaining <= 0) return `You’ve reached today’s free beta reminder session limit. Come back after ${quota.resetAt ? new Date(quota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
+      if (quota.limit > 0 && quota.remaining <= 0) return `You’ve used today’s ${quota.limit} free reminder drafts. Come back after ${formatReset(quota.resetAt)} or join the waitlist for higher limits.`;
+      if (hourlyQuota.limit > 0 && hourlyQuota.remaining <= 0) return `You’ve made several AI requests recently. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`;
       return '';
     }
+    if (result?.reminderSession && result.reminderSession.refinementCount >= result.reminderSession.refinementLimit) {
+      return 'This draft has already used its free adjustment. Start a new reminder to adjust another draft.';
+    }
     if (refinementQuota.limit > 0 && refinementQuota.remaining <= 0) {
-      return `You’ve reached today’s free beta adjustment limit. Come back after ${refinementQuota.resetAt ? new Date(refinementQuota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
+      return `You’ve used today’s ${refinementQuota.limit} free adjustments. Come back after ${formatReset(refinementQuota.resetAt)} or join the waitlist for higher limits.`;
+    }
+    if (hourlyQuota.limit > 0 && hourlyQuota.remaining <= 0) {
+      return `You’ve made several AI requests recently. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`;
     }
     return '';
   }
@@ -317,26 +322,18 @@ export function Generator() {
   }
 
   const hourlyBlocked = hourlyQuota.limit > 0 && hourlyQuota.remaining <= 0;
-  const sessionBlocked = quota.limit > 0 && quota.remaining <= 0;
-  const refinementBlocked = refinementQuota.limit > 0 && refinementQuota.remaining <= 0;
   const turnstileBlocked = Boolean(turnstileSiteKey) && !turnstileToken;
   const missingReminderSession = Boolean(result) && !result?.reminderSessionId;
   const sessionRefinementBlocked = Boolean(result?.reminderSession && result.reminderSession.refinementCount >= result.reminderSession.refinementLimit);
   // Keep the primary button clickable so users always get a clear message
   // when security check/quota blocks generation, instead of a dead control.
-  const canGenerateInitial = state !== 'loading' && !sessionBlocked && !hourlyBlocked;
-  const canRefine = state !== 'loading' && Boolean(result) && !missingReminderSession && !sessionRefinementBlocked && !refinementBlocked && !hourlyBlocked;
-  const quotaNotice = hourlyBlocked
-    ? `Too many AI requests this hour. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`
-    : sessionBlocked
-      ? `You’ve reached today’s free beta reminder session limit. Come back after ${quota.resetAt ? new Date(quota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`
-      : sessionRefinementBlocked && result
-        ? 'This reminder session has used its free beta adjustment. Start a new reminder session to adjust another draft.'
-        : refinementBlocked && result
-        ? `You’ve reached today’s free beta adjustment limit. Come back after ${refinementQuota.resetAt ? new Date(refinementQuota.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`
-        : missingReminderSession
-          ? 'Start a new reminder session before making adjustments.'
-          : '';
+  const canGenerateInitial = state !== 'loading';
+  const canRefine = state !== 'loading' && Boolean(result) && !missingReminderSession && !sessionRefinementBlocked;
+  const quotaNotice = sessionRefinementBlocked && result
+    ? 'This draft has already used its free adjustment. Start a new reminder to adjust another draft.'
+    : missingReminderSession
+      ? 'Start a new reminder before making adjustments.'
+      : '';
 
   return (
     <section data-clarity-mask="true" className="section grid items-start gap-6 lg:grid-cols-2 mobile-stack">
@@ -388,7 +385,7 @@ export function Generator() {
       </div>
       <div className="paper-card overflow-hidden">
         <div className="border-b border-[var(--border)] bg-white p-6">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your recommended reminder is ready.' : state === 'loading' ? 'Reviewing the situation…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><div className="flex flex-col gap-2 text-xs font-bold sm:items-end"><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{quota.remaining} of {quota.limit} free sessions left today</span><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{refinementQuota.remaining} of {refinementQuota.limit} adjustments left today</span><span className={`rounded-full px-3 py-2 ${hourlyBlocked ? 'bg-red-50 text-red-800' : 'bg-[var(--primary-soft)]'}`}>{hourlyQuota.remaining} of {hourlyQuota.limit} hourly AI calls left</span></div></div>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row"><h2 className="font-display text-3xl">{state === 'success' ? 'Your recommended reminder is ready.' : state === 'loading' ? 'Reviewing the situation…' : state === 'error' ? 'We could not generate your reminder.' : 'Ready when you are.'}</h2><div className="flex flex-col gap-2 text-xs font-bold sm:items-end"><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{quota.remaining} of {quota.limit} free reminder drafts left today</span><span className="rounded-full bg-[var(--primary-soft)] px-3 py-2">{refinementQuota.remaining} of {refinementQuota.limit} free adjustments left today</span><span className={`rounded-full px-3 py-2 ${hourlyBlocked ? 'bg-red-50 text-red-800' : 'bg-[var(--primary-soft)]'}`}>{hourlyQuota.remaining} of {hourlyQuota.limit} recent AI requests left</span></div></div>
           {apiSource ? <p className="mt-2 text-xs muted">Draft generated. Review and edit before sending.</p> : null}
           {errorMessage || quotaNotice ? <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{errorMessage || quotaNotice}</p> : <p className="mt-3 text-sm muted">Describe the payment situation to get one recommended reminder stage and draft. Nothing is sent automatically.</p>}
         </div>
@@ -540,11 +537,15 @@ function draftForStage(api: { gentle: ApiDraft; firm: ApiDraft; finalNotice: Api
   if (stage === 'Firm Reminder') return api.firm;
   return api.gentle;
 }
-function messageForApiError(e: { code?: string; status?: number; message?: string; resetAt?: string }) {
-  if (e.code === 'REMINDER_SESSION_REQUIRED' || e.code === 'REMINDER_SESSION_NOT_FOUND') return 'Start a new reminder session before making adjustments.';
-  if (e.code === 'REMINDER_SESSION_REFINEMENT_LIMIT_REACHED') return 'This reminder session has already used its free beta adjustment. Start a new session or join the waitlist for higher limits.';
-  if (e.code === 'QUOTA_EXCEEDED' || e.status === 402) return `You’ve reached today’s free beta limit. Come back after ${e.resetAt ? new Date(e.resetAt).toLocaleString() : 'the next reset'} or join the waitlist for higher limits.`;
-  if (e.code === 'RATE_LIMITED' || e.status === 429) return 'Too many requests. Please wait a bit and try again.';
+function messageForApiError(e: { code?: string; status?: number; message?: string; resetAt?: string }, mode: RefinementMode = 'initial') {
+  if (e.code === 'REMINDER_SESSION_REQUIRED' || e.code === 'REMINDER_SESSION_NOT_FOUND') return 'Start a new reminder before making adjustments.';
+  if (e.code === 'REMINDER_SESSION_REFINEMENT_LIMIT_REACHED') return 'This draft has already used its free adjustment. Start a new reminder to adjust another draft.';
+  if (e.code === 'QUOTA_EXCEEDED' || e.status === 402) {
+    return mode === 'initial'
+      ? `You’ve used today’s free reminder drafts. Come back after ${formatReset(e.resetAt)} or join the waitlist for higher limits.`
+      : `You’ve used today’s free adjustments. Come back after ${formatReset(e.resetAt)} or join the waitlist for higher limits.`;
+  }
+  if (e.code === 'RATE_LIMITED' || e.status === 429) return 'You’ve made several AI requests recently. Please wait a bit and try again.';
   if (e.code === 'PROVIDER_UNAVAILABLE' || e.status === 503) return 'The generator is temporarily unavailable. Please try again in a few minutes.';
   if (e.code === 'REQUEST_TIMEOUT' || e.status === 408) return 'The generator took too long to respond. Please refresh the security check and try again.';
   if (e.code === 'NETWORK_ERROR' || e.code === 'UPSTREAM_UNAVAILABLE') return 'Could not reach the generator service. Please refresh and try again.';
