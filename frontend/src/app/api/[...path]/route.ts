@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const UPSTREAM = (process.env.API_UPSTREAM_URL || 'https://api.freelancerreply.com').replace(/\/$/, '');
+const UPSTREAM = 'https://api.freelancerreply.com';
 
 function rewriteSetCookie(cookie: string) {
   return cookie
