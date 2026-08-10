@@ -36,3 +36,16 @@ test('per-reminder-session refinement contract is implemented end-to-end', () =>
   assert.ok(schema.properties.reminderSessionId, 'API contract should document reminderSessionId');
   assert.match(apiContract.paths['/api/generate-payment-reminder'].post.responses['200'].description, /reminderSessionId/);
 });
+
+test('anonymous session login is idempotent so refinements keep the same actor', () => {
+  const loginIndex = source.indexOf('async function handleAnonymousLogin');
+  const existingSessionIndex = source.indexOf('const existing = await readValidSessionFromCookie(request, env);', loginIndex);
+  const quotaIndex = source.indexOf('const quota = await consumeQuota(env, ipActor, ACTION_LOGIN, 1, request);', loginIndex);
+  const newUserIndex = source.indexOf('const userId = `anon_${crypto.randomUUID()}`;', loginIndex);
+
+  assert.ok(loginIndex > 0, 'handleAnonymousLogin should exist');
+  assert.ok(existingSessionIndex > loginIndex, 'anonymous login should check for an existing valid session');
+  assert.ok(quotaIndex > existingSessionIndex, 'existing session reuse should happen before consuming login quota');
+  assert.ok(newUserIndex > existingSessionIndex, 'new anonymous user creation should happen only after reuse check');
+  assert.match(source, /reused:\s*true/, 'reuse response should expose reused:true for diagnostics');
+});

@@ -205,11 +205,27 @@ async function handleHealth(request: Request, env: Env) {
 
 async function handleAnonymousLogin(request: Request, env: Env) {
   requireSessionSecret(env);
+  const now = new Date();
+  const existing = await readValidSessionFromCookie(request, env);
+  if (existing) {
+    await env.DB.prepare(`UPDATE sessions SET last_seen_at = ? WHERE id = ?`).bind(now.toISOString(), existing.sessionId).run();
+    const signed = await signSession(existing.sessionId, env.SESSION_SECRET);
+    const response = json({
+      ok: true,
+      mode: 'anonymous_session',
+      reused: true,
+      message: 'P0 has no account login. Existing anonymous httpOnly session reused for quota and usage state.',
+      user: { id: existing.userId, type: 'anonymous', plan: 'free' },
+      expiresAt: existing.expiresAt
+    }, 200, request, env);
+    response.headers.append('Set-Cookie', buildSessionCookie(signed, env));
+    return response;
+  }
+
   const ipActor = await getIpActor(request, env);
   const quota = await consumeQuota(env, ipActor, ACTION_LOGIN, 1, request);
   if (!quota.allowed) return errorJson('RATE_LIMITED', 'Too many anonymous session requests.', 429, request, env, { resetAt: quota.resetAt });
 
-  const now = new Date();
   const userId = `anon_${crypto.randomUUID()}`;
   const sessionId = crypto.randomUUID();
   const expiresAt = new Date(now.getTime() + SESSION_TTL_SECONDS * 1000).toISOString();
@@ -222,6 +238,7 @@ async function handleAnonymousLogin(request: Request, env: Env) {
   const response = json({
     ok: true,
     mode: 'anonymous_session',
+    reused: false,
     message: 'P0 has no account login. This endpoint issues an anonymous httpOnly session for quota and usage state only.',
     user: { id: userId, type: 'anonymous', plan: 'free' },
     expiresAt
@@ -439,18 +456,22 @@ async function handleEvent(request: Request, env: Env) {
 
 async function getActor(request: Request, env: Env): Promise<Actor> {
   requireSessionSecret(env);
-  const signed = parseCookie(request.headers.get('cookie') || '', SESSION_COOKIE);
-  if (signed) {
-    const sessionId = await verifySession(signed, env.SESSION_SECRET);
-    if (sessionId) {
-      const row = await env.DB.prepare(`SELECT id, user_id, expires_at FROM sessions WHERE id = ?`).bind(sessionId).first<any>();
-      if (row && Date.parse(row.expires_at) > Date.now()) {
-        await env.DB.prepare(`UPDATE sessions SET last_seen_at = ? WHERE id = ?`).bind(new Date().toISOString(), sessionId).run();
-        return { actorType: 'user', actorId: row.user_id, userId: row.user_id, sessionId };
-      }
-    }
+  const existing = await readValidSessionFromCookie(request, env);
+  if (existing) {
+    await env.DB.prepare(`UPDATE sessions SET last_seen_at = ? WHERE id = ?`).bind(new Date().toISOString(), existing.sessionId).run();
+    return { actorType: 'user', actorId: existing.userId, userId: existing.userId, sessionId: existing.sessionId };
   }
   return getIpActor(request, env);
+}
+
+async function readValidSessionFromCookie(request: Request, env: Env) {
+  const signed = parseCookie(request.headers.get('cookie') || '', SESSION_COOKIE);
+  if (!signed) return null;
+  const sessionId = await verifySession(signed, env.SESSION_SECRET);
+  if (!sessionId) return null;
+  const row = await env.DB.prepare(`SELECT id, user_id, expires_at FROM sessions WHERE id = ?`).bind(sessionId).first<any>();
+  if (!row || Date.parse(row.expires_at) <= Date.now()) return null;
+  return { sessionId, userId: String(row.user_id), expiresAt: String(row.expires_at) };
 }
 
 async function getIpActor(request: Request, env: Env): Promise<Actor> {
