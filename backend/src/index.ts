@@ -163,7 +163,9 @@ export default {
 };
 
 async function handleHealth(request: Request, env: Env) {
-  return json({
+  const url = new URL(request.url);
+  const probeAi = url.searchParams.get('probe') === 'ai';
+  const payload: Record<string, unknown> = {
     ok: true,
     service: 'freelancer-reply-api',
     siteName: env.SITE_NAME,
@@ -188,11 +190,17 @@ async function handleHealth(request: Request, env: Env) {
       aiModel: env.AI_MODEL || 'openai/gpt-4.1-mini',
       aiMaxTokens: getInt(env.AI_MAX_TOKENS, 1400),
       aiProviderConfigured: Boolean(env.AI_PROVIDER_API_KEY),
+      aiProviderTimeoutMs: getInt(env.AI_PROVIDER_TIMEOUT_MS, 30_000),
       turnstileConfigured: Boolean(env.TURNSTILE_SECRET_KEY)
     },
     limits: reminderLimits(env),
     time: new Date().toISOString()
-  }, 200, request, env);
+  };
+  if (probeAi) {
+    payload.aiProbe = await probeAiProvider(env);
+    if ((payload.aiProbe as { ok?: boolean })?.ok === false) payload.ok = false;
+  }
+  return json(payload, 200, request, env);
 }
 
 async function handleAnonymousLogin(request: Request, env: Env) {
@@ -302,9 +310,15 @@ async function handleGenerate(request: Request, env: Env, ctx: ExecutionContext)
   }
 
   if (env.TURNSTILE_SECRET_KEY) {
-    if (!body.turnstileToken) return errorJson('TURNSTILE_FAILED', 'Bot protection token is required.', 403, request, env);
+    if (!body.turnstileToken) {
+      console.warn('generate_rejected', { code: 'TURNSTILE_FAILED', reason: 'missing_token' });
+      return errorJson('TURNSTILE_FAILED', 'Bot protection token is required.', 403, request, env);
+    }
     const turnstile = await verifyTurnstile(body.turnstileToken, getClientIp(request), env);
-    if (!turnstile.success) return errorJson('TURNSTILE_FAILED', 'Bot protection check failed.', 403, request, env);
+    if (!turnstile.success) {
+      console.warn('generate_rejected', { code: 'TURNSTILE_FAILED', reason: turnstile.error || 'verify_failed' });
+      return errorJson('TURNSTILE_FAILED', 'Bot protection check failed.', 403, request, env);
+    }
   }
 
   const quotaAction = safeInput.refinementMode === 'initial' ? ACTION_GENERATE : ACTION_REFINE;
@@ -869,9 +883,90 @@ async function verifyTurnstile(token: string, ip: string, env: Env) {
   form.append('secret', env.TURNSTILE_SECRET_KEY || '');
   form.append('response', token);
   form.append('remoteip', ip);
-  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
-  if (!res.ok) return { success: false };
-  return res.json<any>();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: form,
+      signal: controller.signal
+    });
+    if (!res.ok) return { success: false, error: `siteverify_http_${res.status}` };
+    return res.json<any>();
+  } catch (error) {
+    console.warn('turnstile_verify_failed', safeError(error));
+    return { success: false, error: 'siteverify_timeout_or_network' };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function probeAiProvider(env: Env) {
+  if (!env.AI_PROVIDER_API_KEY) {
+    return { ok: false, configured: false, error: 'AI_PROVIDER_API_KEY missing' };
+  }
+  const baseUrl = (env.AI_PROVIDER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
+  const model = env.AI_MODEL || 'openai/gpt-4.1-mini';
+  const started = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${env.AI_PROVIDER_API_KEY}`,
+        ...(providerName(env) === 'openrouter'
+          ? {
+              'HTTP-Referer': env.APP_ORIGIN || 'https://freelancerreply.com',
+              'X-OpenRouter-Title': `${env.SITE_NAME || 'FreelancerReply'}-health-probe`
+            }
+          : {})
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        max_tokens: 16,
+        messages: [{ role: 'user', content: 'Reply with the single word pong.' }]
+      })
+    });
+    const bodyText = await res.text().catch(() => '');
+    const ms = Date.now() - started;
+    if (!res.ok) {
+      console.warn('ai_probe_failed', { status: res.status, ms, bodyHead: bodyText.slice(0, 180) });
+      return {
+        ok: false,
+        configured: true,
+        provider: providerName(env),
+        model,
+        status: res.status,
+        ms,
+        error: `provider_http_${res.status}`,
+        bodyHead: bodyText.slice(0, 180)
+      };
+    }
+    return {
+      ok: true,
+      configured: true,
+      provider: providerName(env),
+      model,
+      status: res.status,
+      ms
+    };
+  } catch (error) {
+    console.warn('ai_probe_exception', safeError(error));
+    return {
+      ok: false,
+      configured: true,
+      provider: providerName(env),
+      model,
+      ms: Date.now() - started,
+      error: error instanceof DOMException && error.name === 'AbortError' ? 'provider_timeout' : 'provider_network_error'
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function parseJson<T>(request: Request): Promise<T> {
@@ -911,8 +1006,11 @@ function parseCookie(cookieHeader: string, name: string) {
 }
 
 function buildSessionCookie(value: string, env: Env) {
+  // Cross-site frontend (freelancerreply.com) -> API (workers.dev) requires SameSite=None; Secure.
+  // SameSite=Lax cookies are often dropped by browsers on cross-site XHR/fetch credentialed responses.
   const secure = env.ENVIRONMENT === 'production' ? '; Secure' : '';
-  return `${SESSION_COOKIE}=${value}; Path=/; Max-Age=${SESSION_TTL_SECONDS}; HttpOnly${secure}; SameSite=Lax`;
+  const sameSite = env.ENVIRONMENT === 'production' ? 'None' : 'Lax';
+  return `${SESSION_COOKIE}=${value}; Path=/; Max-Age=${SESSION_TTL_SECONDS}; HttpOnly${secure}; SameSite=${sameSite}`;
 }
 
 async function signSession(sessionId: string, secret: string) {

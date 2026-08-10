@@ -208,7 +208,7 @@ export function Generator() {
         } : current);
       }
       setErrorMessage(messageForApiError(e));
-      await refreshUsage().catch(() => null);
+      refreshUsage().catch(() => null);
       track('error_shown', { type: e.code || e.status || 'api_error' });
     } finally {
       if (turnstileSiteKey) resetTurnstile();
