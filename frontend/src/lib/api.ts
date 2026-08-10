@@ -1,4 +1,4 @@
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://freelancer-reply-api.huangzhenhui0303.workers.dev').replace(/\/$/, '');
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.freelancerreply.com').replace(/\/$/, '');
 
 export type ReminderStage = 'Due Soon / Due Today' | 'Gentle Reminder' | 'Firm Reminder' | 'Final Notice';
 export type PreviousReminders = 'none' | 'one' | 'two' | 'three_plus';

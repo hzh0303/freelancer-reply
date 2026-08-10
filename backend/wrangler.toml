@@ -6,10 +6,10 @@ account_id = "383a99a9945f38a4b206370d43c247ee"
 workers_dev = true
 preview_urls = true
 
-# Custom domain route deferred until freelancerreply.com zone is confirmed in this account.
-# routes = [
-#   { pattern = "api.freelancerreply.com/*", zone_name = "freelancerreply.com" }
-# ]
+# Same-site API domain to avoid cross-site cookie/storage partitioning issues with workers.dev.
+routes = [
+  { pattern = "api.freelancerreply.com", custom_domain = true }
+]
 
 [vars]
 SITE_NAME = "FreelancerReply"
