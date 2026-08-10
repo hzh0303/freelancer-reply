@@ -12,6 +12,9 @@
   },
   "workers_dev": true,
   "preview_urls": true,
+  "vars": {
+    "API_UPSTREAM_URL": "https://api.freelancerreply.com"
+  },
   "routes": [
     { "pattern": "freelancerreply.com/*", "zone_name": "freelancerreply.com" },
     { "pattern": "www.freelancerreply.com/*", "zone_name": "freelancerreply.com" }

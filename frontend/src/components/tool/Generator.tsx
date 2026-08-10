@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   createAnonymousSession,
@@ -99,12 +99,17 @@ export function Generator() {
   const [apiSource, setApiSource] = useState<'ai_provider' | 'template_fallback' | 'frontend_fallback' | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileTokenRef = useRef('');
   const [turnstileStatus, setTurnstileStatus] = useState<'idle' | 'ready' | 'error' | 'expired'>('idle');
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
-  const handleTurnstileToken = useCallback((token: string) => setTurnstileToken(token), []);
+  const handleTurnstileToken = useCallback((token: string) => {
+    turnstileTokenRef.current = token;
+    setTurnstileToken(token);
+  }, []);
   const handleTurnstileStatus = useCallback((status: 'idle' | 'ready' | 'error' | 'expired') => setTurnstileStatus(status), []);
   const resetTurnstile = useCallback(() => {
+    turnstileTokenRef.current = '';
     setTurnstileToken('');
     setTurnstileResetKey((key) => key + 1);
   }, []);
@@ -152,7 +157,7 @@ export function Generator() {
       track('error_shown', { type: mode === 'initial' ? 'session_quota_preflight' : 'refinement_quota_preflight' });
       return;
     }
-    if (turnstileSiteKey && !turnstileToken) {
+    if (turnstileSiteKey && !(turnstileTokenRef.current || turnstileToken)) {
       setErrorMessage(turnstileStatus === 'expired' ? 'Security verification expired. Please complete the check again.' : 'Complete the security check before generating a draft.');
       track('error_shown', { type: 'turnstile_preflight' });
       return;
@@ -175,7 +180,10 @@ export function Generator() {
       if (turnstileSiteKey) resetTurnstile();
     }, 50_000);
     track(mode === 'regenerate' ? 'regenerate_clicked' : mode === 'softer' ? 'make_softer_clicked' : mode === 'firmer' ? 'make_firmer_clicked' : 'generator_started', { stage });
+    const activeTurnstileToken = turnstileTokenRef.current || turnstileToken || undefined;
     try {
+      // Ensure anonymous session cookie exists on this origin before generate.
+      await createAnonymousSession().catch(() => null);
       const apiResult = await generatePaymentReminder({
         clientName: submitted.clientName,
         invoiceAmount: submitted.amount,
@@ -189,7 +197,7 @@ export function Generator() {
         invoiceNumber: submitted.invoiceNumber || undefined,
         paymentLink: submitted.paymentLink || undefined,
         clientRelationship: submitted.relationship || undefined,
-        turnstileToken: turnstileToken || undefined,
+        turnstileToken: activeTurnstileToken,
         reminderSessionId: mode === 'initial' ? undefined : result?.reminderSessionId
       });
       const normalized = normalizeApiResult(apiResult, stage, reason, mode, submitted);
@@ -539,6 +547,7 @@ function messageForApiError(e: { code?: string; status?: number; message?: strin
   if (e.code === 'RATE_LIMITED' || e.status === 429) return 'Too many requests. Please wait a bit and try again.';
   if (e.code === 'PROVIDER_UNAVAILABLE' || e.status === 503) return 'The generator is temporarily unavailable. Please try again in a few minutes.';
   if (e.code === 'REQUEST_TIMEOUT' || e.status === 408) return 'The generator took too long to respond. Please refresh the security check and try again.';
+  if (e.code === 'NETWORK_ERROR' || e.code === 'UPSTREAM_UNAVAILABLE') return 'Could not reach the generator service. Please refresh and try again.';
   if (e.code === 'TURNSTILE_FAILED' || e.status === 403) return 'Security verification failed. Please refresh and try again.';
   if (e.code === 'VALIDATION_ERROR') return e.message || 'Some details are invalid. Please review your inputs.';
   return e.message || 'Something went wrong while generating your draft. Please try again.';

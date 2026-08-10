@@ -1,4 +1,6 @@
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.freelancerreply.com').replace(/\/$/, '');
+// Same-origin by default so the browser calls /api/* on freelancerreply.com.
+// The Cloudflare Worker proxies those requests to the backend API.
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
 
 export type ReminderStage = 'Due Soon / Due Today' | 'Gentle Reminder' | 'Firm Reminder' | 'Final Notice';
 export type PreviousReminders = 'none' | 'one' | 'two' | 'three_plus';
@@ -62,8 +64,9 @@ const GENERATE_API_TIMEOUT_MS = 45_000;
 async function apiFetch<T>(path: string, init: RequestInit = {}, timeoutMs = DEFAULT_API_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  const url = `${API_BASE_URL}${path}`;
   try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
+    const res = await fetch(url, {
       ...init,
       credentials: 'include',
       signal: controller.signal,
@@ -88,6 +91,12 @@ async function apiFetch<T>(path: string, init: RequestInit = {}, timeoutMs = DEF
       timeoutError.status = 408;
       throw timeoutError;
     }
+    if (error instanceof TypeError) {
+      const networkError = new Error('Could not reach the generator service. Please check your connection and try again.') as ApiError;
+      networkError.code = 'NETWORK_ERROR';
+      networkError.status = 0;
+      throw networkError;
+    }
     throw error;
   } finally {
     window.clearTimeout(timeout);
@@ -95,7 +104,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}, timeoutMs = DEF
 }
 
 export async function createAnonymousSession() {
-  return apiFetch('/api/auth/login', { method: 'POST' });
+  return apiFetch('/api/auth/login', { method: 'POST', body: '{}' });
 }
 
 export async function getUsage() {
@@ -118,10 +127,14 @@ export async function generatePaymentReminder(input: {
   turnstileToken?: string;
   reminderSessionId?: string;
 }) {
-  return apiFetch<GenerateApiResponse>('/api/generate-payment-reminder', {
-    method: 'POST',
-    body: JSON.stringify(input)
-  }, GENERATE_API_TIMEOUT_MS);
+  return apiFetch<GenerateApiResponse>(
+    '/api/generate-payment-reminder',
+    {
+      method: 'POST',
+      body: JSON.stringify(input)
+    },
+    GENERATE_API_TIMEOUT_MS
+  );
 }
 
 export async function submitWaitlist(input: {
