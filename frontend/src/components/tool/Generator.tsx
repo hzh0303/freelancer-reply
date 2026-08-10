@@ -169,6 +169,11 @@ export function Generator() {
     setPendingAction(null);
     setState('loading');
     setErrorMessage('');
+    const loadingWatchdog = window.setTimeout(() => {
+      setState((current) => (current === 'loading' ? (result ? 'success' : 'error') : current));
+      setErrorMessage((current) => current || 'The generator took too long to respond. Please refresh the security check and try again.');
+      if (turnstileSiteKey) resetTurnstile();
+    }, 50_000);
     track(mode === 'regenerate' ? 'regenerate_clicked' : mode === 'softer' ? 'make_softer_clicked' : mode === 'firmer' ? 'make_firmer_clicked' : 'generator_started', { stage });
     try {
       const apiResult = await generatePaymentReminder({
@@ -211,6 +216,7 @@ export function Generator() {
       refreshUsage().catch(() => null);
       track('error_shown', { type: e.code || e.status || 'api_error' });
     } finally {
+      window.clearTimeout(loadingWatchdog);
       if (turnstileSiteKey) resetTurnstile();
     }
   }
@@ -308,8 +314,10 @@ export function Generator() {
   const turnstileBlocked = Boolean(turnstileSiteKey) && !turnstileToken;
   const missingReminderSession = Boolean(result) && !result?.reminderSessionId;
   const sessionRefinementBlocked = Boolean(result?.reminderSession && result.reminderSession.refinementCount >= result.reminderSession.refinementLimit);
-  const canGenerateInitial = state !== 'loading' && !sessionBlocked && !hourlyBlocked && !turnstileBlocked;
-  const canRefine = state !== 'loading' && Boolean(result) && !missingReminderSession && !sessionRefinementBlocked && !refinementBlocked && !hourlyBlocked && !turnstileBlocked;
+  // Keep the primary button clickable so users always get a clear message
+  // when security check/quota blocks generation, instead of a dead control.
+  const canGenerateInitial = state !== 'loading' && !sessionBlocked && !hourlyBlocked;
+  const canRefine = state !== 'loading' && Boolean(result) && !missingReminderSession && !sessionRefinementBlocked && !refinementBlocked && !hourlyBlocked;
   const quotaNotice = hourlyBlocked
     ? `Too many AI requests this hour. Please try again after ${hourlyQuota.resetAt ? new Date(hourlyQuota.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'the hourly reset'}.`
     : sessionBlocked
