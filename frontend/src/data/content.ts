@@ -23,7 +23,7 @@ export const faqs = [
   ['What does FreelancerReply do?', 'FreelancerReply helps freelancers draft late payment reminder messages. You describe the payment situation, and it recommends a reminder stage with a draft email and short DM.'],
   ['Does FreelancerReply ask me to choose friendly, professional, or firm first?', 'No. FreelancerReply starts with the payment situation and recommends the right reminder stage before drafting the message.'],
   ['Is FreelancerReply free?', 'Yes. FreelancerReply is free while in beta. Free usage limits apply so we can prevent abuse and keep the beta available.'],
-  ['What is a reminder session?', 'A reminder session starts when you generate one recommended reminder for a payment situation. A refinement means using “Make it softer” or “Make it firmer” on that draft.'],
+  ['How do free reminders and adjustments work?', 'Each free reminder draft is for one payment situation. You can use a free adjustment, such as “Make it softer” or “Make it firmer,” on that draft when available.'],
   ['Does FreelancerReply generate Gentle, Firm, and Final Notice all at once?', 'No. The current beta generates one recommended reminder for the situation you enter. Full reminder sequences may be added later as a Pro feature.'],
   ['How does it choose the reminder stage?', 'The stage is based mainly on days overdue and previous reminders sent. Client relationship may also affect how direct the recommendation should be.'],
   ['Does FreelancerReply send emails automatically?', 'No. FreelancerReply only creates drafts. You review, edit, copy, and send the message yourself.'],
