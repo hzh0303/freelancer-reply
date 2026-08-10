@@ -41,9 +41,13 @@ export function Analytics() {
       const name = payload.detail?.event;
       const props = payload.detail?.props || {};
       if (!name) return;
-      window.plausible?.(name, { props });
-      window.gtag?.('event', name, props);
-      window.clarity?.('event', name);
+      try {
+        if (typeof window.plausible === 'function') window.plausible(name, { props });
+        if (typeof window.gtag === 'function') window.gtag('event', name, props);
+        if (typeof window.clarity === 'function') window.clarity('event', name);
+      } catch {
+        // Analytics failures must never block core interactions.
+      }
     };
     window.addEventListener('fr-analytics', handler);
     return () => window.removeEventListener('fr-analytics', handler);
@@ -52,7 +56,7 @@ export function Analytics() {
   const choose = (value: 'accepted' | 'rejected') => {
     localStorage.setItem(CONSENT_KEY, value);
     setConsent(value);
-    if (window.gtag) {
+    if (typeof window.gtag === 'function') {
       window.gtag('consent', 'update', {
         analytics_storage: value === 'accepted' ? 'granted' : 'denied',
         ad_storage: 'denied',

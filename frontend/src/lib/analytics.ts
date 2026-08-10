@@ -24,16 +24,29 @@ type Props = Record<string, string | number | boolean | undefined>;
 
 declare global {
   interface Window {
-    plausible?: (event: string, opts?: { props?: Props }) => void;
-    gtag?: (...args: unknown[]) => void;
-    clarity?: (...args: unknown[]) => void;
+    plausible?: unknown;
+    gtag?: unknown;
+    clarity?: unknown;
+  }
+}
+
+function callAnalytics(fn: unknown, args: unknown[]) {
+  if (typeof fn !== 'function') return;
+  try {
+    fn(...args);
+  } catch {
+    // Analytics must never block the generator or any core CTA.
   }
 }
 
 export function track(event: AnalyticsEvent, props: Props = {}) {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent('fr-analytics', { detail: { event, props } }));
-  window.plausible?.(event, { props });
-  window.gtag?.('event', event, props);
-  window.clarity?.('event', event);
+  try {
+    window.dispatchEvent(new CustomEvent('fr-analytics', { detail: { event, props } }));
+  } catch {
+    // Ignore third-party listener failures.
+  }
+  callAnalytics(window.plausible, [event, { props }]);
+  callAnalytics(window.gtag, ['event', event, props]);
+  callAnalytics(window.clarity, ['event', event]);
 }
